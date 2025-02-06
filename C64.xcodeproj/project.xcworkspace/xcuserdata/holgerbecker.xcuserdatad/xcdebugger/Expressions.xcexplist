@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "MOS6502.stopTimer():MOS6502.swift">
+      </ContextState>
+      <ContextState
+         contextName = "MOS6502.execute():MOS6502.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "MOS6502.fetchByteImmediatePC():MOS6502.swift">
+      </ContextState>
+      <ContextState
+         contextName = "C64.loadKernalROM():C64.swift">
+      </ContextState>
+      <ContextState
+         contextName = "MOS6502.reset():MOS6502.swift">
+      </ContextState>
+      <ContextState
+         contextName = "VIC.fillVideoBuffer(forScanline:):VIC.swift">
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>
