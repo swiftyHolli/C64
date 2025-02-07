@@ -9,7 +9,7 @@ import SwiftUI
 import UIKit
 
 struct TVScreen: View {
-    @ObservedObject var vic: VIC
+    @ObservedObject var vic: VICII
     var body: some View {
         VStack {
             DrawViewUIViewRepresentable(pixels: $vic.canvasBuffer)
@@ -57,5 +57,5 @@ class DrawView: UIView {
 }
 
 #Preview {
-    TVScreen(vic: VIC(address: 0xD000))
+    TVScreen(vic: VICII())
 }

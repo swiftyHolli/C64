@@ -8,9 +8,20 @@
 import Foundation
 
 class C64 {
+    
+    struct C64Adresses {
+        static let CharacterROM = (start: Word(0xD000), end: Word(0xDFFF))
+        static let BasicRom = (start: Word(0xA000), end: Word(0xBFFF))
+        static let KernalRom = (start: Word(0xE000), end: Word(0xFFFF))
+        static let Vic = (start: Word(0xD000), end: Word(0xD3FF))
+        static let Cid = (start: Word(0xD400), end: Word(0xD7FF))
+        static let Cia1 = (start: Word(0xDC00), end: Word(0xDCFF))
+        static let Cia2 = (start: Word(0xDD00), end: Word(0xDDFF))
+    }
 
+    var clockTimer: Timer?
+    
     let MaxMem = 1024 * 64
-    let characterROMStartAddress = 0xD000
     
     var memory = [Byte]()
     
@@ -18,7 +29,7 @@ class C64 {
     var basicROM = [Byte]()
     var kernalROM = [Byte]()
     
-    var vic:  VIC
+    var vic:  VICII
     var mos6502: MOS6502
     var cia1: CIA
     var cia2: CIA
@@ -64,16 +75,74 @@ class C64 {
         memory = [Byte](repeating: 0, count: MaxMem)
         cia1 = CIA(address: 0xDC00)
         cia2 = CIA(address: 0xDD00)
-        vic = VIC(address: 0xD000)
+        vic = VICII()
         mos6502 = MOS6502()
         loadROMs()
-        cia1.c64 = self
-        cia2.c64 = self
         vic.c64 = self
         mos6502.c64 = self
+        startTimer()
+    }
+    
+    func startTimer() {
+        if clockTimer == nil {
+            clockTimer = Timer.scheduledTimer(timeInterval: 0.000_001, target: self, selector: #selector(clock), userInfo: "MOS6502", repeats: false)
+        }
+    }
+    
+    func stopTimer() {
+        clockTimer?.invalidate()
+        clockTimer = nil
+    }
+    
+    @objc func clock() {
+        mos6502.execute()
+        if(cia1.clock()) == true {
+            mos6502.INT = true
+        }
+        _ = cia2.clock()
+        vic.clock()
+        clockTimer = nil
+        startTimer()
+    }
 
-        //initMemory()
-        //mos6502.reset()
+    
+    func readByteFromAddress(_ address: Word)->Byte {
+        // Address decoding
+        if (LORAM && address >= C64Adresses.BasicRom.start && address <= C64Adresses.BasicRom.end) {
+            return basicROM[Int(address - C64Adresses.BasicRom.start)]
+        }
+        if (HIRAM && address >= C64Adresses.KernalRom.start && address <= C64Adresses.KernalRom.end) {
+            return kernalROM[Int(address - C64Adresses.KernalRom.start)]
+        }
+        if (!CHAREN && address >= C64Adresses.CharacterROM.start && address <= C64Adresses.CharacterROM.end) {
+            return characterRom[Int(address - C64Adresses.CharacterROM.start)]
+        }
+        if (CHAREN && address >= C64Adresses.Vic.start && address <= C64Adresses.Vic.end) {
+            return vic.getRegister(address: Int(address - C64Adresses.Vic.start))
+        }
+        if (CHAREN && address >= C64Adresses.Cia1.start && address <= C64Adresses.Cia1.end) {
+            return cia1.getRegister(address: Int(address - C64Adresses.Cia1.start))
+        }
+        if (CHAREN && address >= C64Adresses.Cia2.start && address <= C64Adresses.Cia2.end) {
+            return cia2.getRegister(address: Int(address - C64Adresses.Cia2.start))
+        }
+        return memory[Int(address)]
+    }
+
+    func writeByteToAddress(_ address: Word, byte: Byte) {
+        if (CHAREN && address >= C64Adresses.Vic.start && address <= C64Adresses.Vic.end) {
+            vic.setRegister(address: Int(address - C64Adresses.Vic.start), byte: byte)
+            return
+        }
+        if (CHAREN && address >= C64Adresses.Cia1.start && address <= C64Adresses.Cia1.end) {
+            cia1.setRegister(address: Int(address - C64Adresses.Cia1.start), byte: byte)
+            return
+        }
+        if (CHAREN && address >= C64Adresses.Cia2.start && address <= C64Adresses.Cia2.end) {
+            cia2.setRegister(address: Int(address & C64Adresses.Cia2.start), byte: byte)
+            return
+        }
+        memory[Int(address)] = byte
     }
     
     func loadROMs() {

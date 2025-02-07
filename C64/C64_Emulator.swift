@@ -20,10 +20,9 @@ class C64Emulator {
     
     var character: Byte = 0x00
     func writeScreen() {
-        character &+= 1
-        c64.memory[0x2003] = character
-        c64.memory[0xD800 + Int(character)] = character
-        c64.memory[0xD021] = character
+        c64.memory[0x400] = 1
+        
+        
     }
 }
 

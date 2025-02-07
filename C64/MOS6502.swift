@@ -53,18 +53,7 @@ class MOS6502 {
         A = 0; X = 0; Y = 0;
         C = false; Z = false; I = false; D = false; B = false; V = false; N = false;
     }
-    
-    func startTimer() {
-        if timerMos6502 == nil {
-            timerMos6502 = Timer.scheduledTimer(timeInterval: 0.000_001, target: self, selector: #selector(execute), userInfo: "MOS6502", repeats: true)
-        }
-    }
-    
-    func stopTimer() {
-        timerMos6502?.invalidate()
-        timerMos6502 = nil
-    }
-    
+        
     func reset() {
         print("6502 Reset")
         PC = 0xFFFC
@@ -78,7 +67,6 @@ class MOS6502 {
         PC = fetchAddressAbsolutePC() // load reset vector
     
         cycles = 0
-        startTimer()
     }
     
     func NMIhandler() {
@@ -121,13 +109,10 @@ class MOS6502 {
     }
     
     var stop = 0
-    @objc func execute() {
-        c64.cia1.clock()
-        write = false
-        
+    @objc func execute() {        
         if INT { INThandler() }
         
-        if PC == 0xfddd
+        if PC == 0xe716
         {
             stop += 1
         }
@@ -136,8 +121,6 @@ class MOS6502 {
             // MARK: - Control Operations
         case HALT:
             cycles -= 1
-            stopTimer()
-            c64.vic.timerVic.invalidate()
             return
         case BRK:
             PC += 2
@@ -386,7 +369,7 @@ class MOS6502 {
             op = op << 1
             Z = op == 0
             N = op & 0b10000000 > 0
-            writeByteToMemory(address: Int(OP), byte: op)
+            writeByteToMemory(address: (OP), byte: op)
             cycles += 2
         case ASL_XAB:
             var op = fetchByteAbsolutePCindexedX()
@@ -395,7 +378,7 @@ class MOS6502 {
             op = op << 1
             Z = op == 0
             N = op & 0b10000000 > 0
-            writeByteToMemory(address: Int(OP), byte: op)
+            writeByteToMemory(address: (OP), byte: op)
             cycles += 3
         case ASL_ZP:
             var op = fetchByteZeropage()
@@ -427,7 +410,7 @@ class MOS6502 {
             op = op >> 1
             Z = op == 0
             N = false
-            writeByteToMemory(address: Int(OP), byte: op)
+            writeByteToMemory(address: OP, byte: op)
             cycles += 2
         case LSR_XAB:
             var op = fetchByteAbsolutePCindexedX()
@@ -435,7 +418,7 @@ class MOS6502 {
             op = op >> 1
             Z = op == 0
             N = false
-            writeByteToMemory(address: Int(OP), byte: op)
+            writeByteToMemory(address: OP, byte: op)
             cycles += 3
         case LSR_ZP:
             var op = fetchByteZeropage()
@@ -470,7 +453,7 @@ class MOS6502 {
             C = TC
             Z = op == 0
             N = op & 0b10000000 > 0
-            writeByteToMemory(address: Int(OP), byte: op)
+            writeByteToMemory(address: OP, byte: op)
             cycles += 2
         case ROL_XAB:
             var op = fetchByteAbsolutePCindexedX()
@@ -480,7 +463,7 @@ class MOS6502 {
             C = TC
             Z = op == 0
             N = op & 0b10000000 > 0
-            writeByteToMemory(address: Int(OP), byte: op)
+            writeByteToMemory(address: OP, byte: op)
             cycles += 3
         case ROL_ZP:
             var op = fetchByteZeropage()
@@ -519,7 +502,7 @@ class MOS6502 {
             C = TC
             Z = op == 0
             N = op & 0b10000000 > 0
-            writeByteToMemory(address: Int(OP), byte: op)
+            writeByteToMemory(address: OP, byte: op)
             cycles += 2
         case ROR_XAB:
             var op = fetchByteAbsolutePCindexedX()
@@ -529,7 +512,7 @@ class MOS6502 {
             C = TC
             Z = op == 0
             N = op & 0b10000000 > 0
-            writeByteToMemory(address: Int(OP), byte: op)
+            writeByteToMemory(address: OP, byte: op)
             cycles += 3
         case ROR_ZP:
             var op = fetchByteZeropage()
@@ -761,14 +744,14 @@ class MOS6502 {
             op &-= 1
             Z = op == 0
             N = op & 0b10000000 > 0
-            writeByteToMemory(address: Int(OP), byte: op)
+            writeByteToMemory(address: OP, byte: op)
             cycles += 2
         case DEC_XAB:
             var op = fetchByteAbsolutePCindexedX()
             op &-= 1
             Z = op == 0
             N = op & 0b10000000 > 0
-            writeByteToMemory(address: Int(OP), byte: op)
+            writeByteToMemory(address: OP, byte: op)
             cycles += 3
         case DEC_ZP:
             var op = fetchByteZeropage()
@@ -800,14 +783,14 @@ class MOS6502 {
             op &+= 1
             Z = op == 0
             N = op & 0b10000000 > 0
-            writeByteToMemory(address: Int(OP), byte: op)
+            writeByteToMemory(address: OP, byte: op)
             cycles += 2
         case INC_XAB:
             var op = fetchByteAbsolutePCindexedX()
             op &+= 1
             Z = op == 0
             N = op & 0b10000000 > 0
-            writeByteToMemory(address: Int(OP), byte: op)
+            writeByteToMemory(address: OP, byte: op)
             cycles += 3
         case INC_ZP:
             var op = fetchByteZeropage()
@@ -848,29 +831,16 @@ class MOS6502 {
             cycles += 1
         }
     }
-    func readByteFromMemory(address: Int)->Byte {
-        c64.cia1.chipSelect = Word(address) & 0xDC00 > 0
-        if(address >= 0xA000 && address <= 0xBFFF && c64.LORAM) {
-            return c64.basicROM[address - 0xA000]
-        }
-        else if(address >= 0xE000 && address <= 0xFFFF && c64.HIRAM) {
-            return c64.kernalROM[address - 0xE000]
-        }
-        else if(address >= 0xD000 && address <= 0xDFFF && !c64.CHAREN) {
-            return c64.characterRom[address - 0xD000]
-        }
-        return c64.memory[address]
+    func readByteFromMemory(address: Word)->Byte {
+        return c64.readByteFromAddress(address)
     }
     
-    func writeByteToMemory(address: Int, byte: Byte) {
-        c64.cia1.chipSelect = Word(address) & 0xDC00 > 0
-        c64.cia1.write = c64.cia1.chipSelect
-        c64.memory[address] = byte
-        addressBus = address
+    func writeByteToMemory(address: Word, byte: Byte) {
+        c64.writeByteToAddress(address, byte: byte)
     }
         
     func fetchByteImmediatePC()->Byte {
-        let data = readByteFromMemory(address: Int(PC))
+        let data = readByteFromMemory(address: PC)
         PC += 1
         cycles += 1
         return data
@@ -882,7 +852,7 @@ class MOS6502 {
         OP = Word(addressHighByte) << 8
         OP = OP | Word(addressLowByte)
         cycles += 1
-        return readByteFromMemory(address: Int(OP))
+        return readByteFromMemory(address: OP)
     }
     
     func fetchByteAbsolutePCindexedX()->Byte {
@@ -895,7 +865,7 @@ class MOS6502 {
         if OP & 0x00FF < Word(X) {
             cycles += 1
         }
-        return readByteFromMemory(address: Int(OP))
+        return readByteFromMemory(address: OP)
     }
     
     func fetchByteAbsolutePCindexedY()->Byte {
@@ -908,12 +878,12 @@ class MOS6502 {
         if address & 0x00FF < Word(Y) {
             cycles += 1
         }
-        return readByteFromMemory(address: Int(address))
+        return readByteFromMemory(address: address)
     }
     
     func fetchAddressAbsolute(address: Word)->Word {
-        let addressLowByte = readByteFromMemory(address: Int(address))
-        let addressHighByte = readByteFromMemory(address: Int(address + 1))
+        let addressLowByte = readByteFromMemory(address: address)
+        let addressHighByte = readByteFromMemory(address: address + 1)
         var address: Word = Word(addressHighByte) << 8
         address = address | Word(addressLowByte)
         cycles += 6
@@ -930,52 +900,52 @@ class MOS6502 {
     
     func fetchAddressAbsolutePCIndirect()->Word {
         let addressIndirect = fetchAddressAbsolutePC()
-        let addressLowByte = readByteFromMemory(address: Int(addressIndirect))
-        let addressHighByte = readByteFromMemory(address: Int(addressIndirect + 1))
+        let addressLowByte = readByteFromMemory(address: addressIndirect)
+        let addressHighByte = readByteFromMemory(address: addressIndirect + 1)
         let address: Word = Word(addressHighByte) << 8
         cycles += 2
         return address | Word(addressLowByte)
     }
     
     func fetchByteZeropage()->Byte {
-        OPZP = readByteFromMemory(address: Int(PC))
+        OPZP = readByteFromMemory(address: PC)
         PC += 1
         cycles += 2
-        return  readByteFromMemory(address: Int(OPZP))
+        return  readByteFromMemory(address: Word(OPZP))
     }
     
     func fetchByteXindexedZeropage()->Byte {
-        let addressZeropage = Word(readByteFromMemory(address: Int(PC))) + Word(X)
+        let addressZeropage = Word(readByteFromMemory(address: PC)) + Word(X)
         OPZP = Byte(addressZeropage & 0x00FF)
         PC += 1
         cycles += 3
-        return  readByteFromMemory(address: Int(OPZP))
+        return  readByteFromMemory(address: Word(OPZP))
     }
     
     func fetchByteYindexedZeropage()->Byte {
-        var addressZeropage = Word(readByteFromMemory(address: Int(PC))) + Word(Y)
+        var addressZeropage = Word(readByteFromMemory(address: PC)) + Word(Y)
         addressZeropage = addressZeropage & 0x00FF
         PC += 1
         cycles += 3
-        return  readByteFromMemory(address: Int(addressZeropage))
+        return  readByteFromMemory(address: addressZeropage)
     }
     
     func fetchByteXindexedZeropageIndirect()->Byte {
-        var addressZeropage = Word(readByteFromMemory(address: Int(PC))) + Word(X)
+        var addressZeropage = Word(readByteFromMemory(address: PC)) + Word(X)
         addressZeropage = addressZeropage & 0x00FF
-        let addressLowByte = readByteFromMemory(address: Int(addressZeropage))
-        let addressHighByte = readByteFromMemory(address: Int(addressZeropage + 1))
+        let addressLowByte = readByteFromMemory(address: addressZeropage)
+        let addressHighByte = readByteFromMemory(address: addressZeropage + 1)
         var address: Word = Word(addressHighByte) << 8
         address = address | Word(addressLowByte)
         PC += 1
         cycles += 5
-        return  readByteFromMemory(address: Int(address))
+        return  readByteFromMemory(address: address)
     }
     
     func fetchByteZeropageIndirectYindexed()->Byte {
-        let addressZeropage = Int(readByteFromMemory(address: Int(PC)))
-        let addressLowByte = readByteFromMemory(address: Int(addressZeropage))
-        let addressHighByte = readByteFromMemory(address: Int(addressZeropage + 1))
+        let addressZeropage = Int(readByteFromMemory(address: PC))
+        let addressLowByte = readByteFromMemory(address: Word(addressZeropage))
+        let addressHighByte = readByteFromMemory(address: Word(addressZeropage + 1))
         var address: Word = Word(addressHighByte) << 8
         address = address | Word(addressLowByte)
         address += Word(Y)
@@ -984,7 +954,7 @@ class MOS6502 {
         if address & 0x00FF < Word(Y) {
             cycles += 1
         }
-        return  readByteFromMemory(address: Int(address))
+        return  readByteFromMemory(address: address)
     }
     
     func StoreByteAbsolutePC(byte: Byte) {
@@ -993,7 +963,7 @@ class MOS6502 {
         var address: Word = Word(addressHighByte) << 8
         address = address | Word(addressLowByte)
         cycles += 3
-        writeByteToMemory(address: Int(address), byte: byte)
+        writeByteToMemory(address: address, byte: byte)
     }
     
     func StoreByteAbsolutePCIndexedX(byte: Byte) {
@@ -1002,7 +972,7 @@ class MOS6502 {
         var address: Word = Word(addressHighByte) << 8
         address = address | Word(addressLowByte)
         cycles += 4
-        writeByteToMemory(address: Int(address) + Int(X), byte: byte)
+        writeByteToMemory(address: address + Word(X), byte: byte)
     }
     
     func StoreByteAbsolutePCIndexedY(byte: Byte) {
@@ -1011,47 +981,47 @@ class MOS6502 {
         var address: Word = Word(addressHighByte) << 8
         address = address | Word(addressLowByte)
         cycles += 4
-        writeByteToMemory(address: Int(address) + Int(Y), byte: byte)
+        writeByteToMemory(address: address + Word(Y), byte: byte)
     }
     
     func StoreByteZeropage(byte: Byte) {
         let address = fetchByteImmediatePC()
         cycles += 1
-        writeByteToMemory(address: Int(address), byte: byte)
+        writeByteToMemory(address: Word(address), byte: byte)
     }
     
     func StoreByteXindexedZeropage(byte: Byte) {
         let address = fetchByteImmediatePC()
         cycles += 2
-        writeByteToMemory(address: Int(address) + Int(X), byte: byte)
+        writeByteToMemory(address: Word(address) + Word(X), byte: byte)
     }
     
     func StoreByteYindexedZeropage(byte: Byte) {
         let address = fetchByteImmediatePC()
         cycles += 2
-        writeByteToMemory(address: Int(address) + Int(Y), byte: byte)
+        writeByteToMemory(address: Word(address) + Word(Y), byte: byte)
     }
     
     func StoreByteXindexedZeropageIndirect(byte: Byte) {
         var addressZeropage = Word(fetchByteImmediatePC()) + Word(X)
         addressZeropage = addressZeropage & 0x00FF
-        let addressLowByte = readByteFromMemory(address: Int(addressZeropage))
-        let addressHighByte = readByteFromMemory(address: Int(addressZeropage) + 1)
-        var address: Word = Word(addressHighByte) << 8
-        address = address | Word(addressLowByte)
-        cycles += 5
-        writeByteToMemory(address: Int(address), byte: byte)
-    }
-    
-    func storeByteZeropageIndirectYindexed(byte: Byte) {
-        let addressZeropage = Int(fetchByteImmediatePC())
         let addressLowByte = readByteFromMemory(address: addressZeropage)
         let addressHighByte = readByteFromMemory(address: addressZeropage + 1)
         var address: Word = Word(addressHighByte) << 8
         address = address | Word(addressLowByte)
+        cycles += 5
+        writeByteToMemory(address: address, byte: byte)
+    }
+    
+    func storeByteZeropageIndirectYindexed(byte: Byte) {
+        let addressZeropage = fetchByteImmediatePC()
+        let addressLowByte = readByteFromMemory(address: Word(addressZeropage))
+        let addressHighByte = readByteFromMemory(address: Word(addressZeropage + 1))
+        var address: Word = Word(addressHighByte) << 8
+        address = address | Word(addressLowByte)
         address += Word(Y)
         cycles += 5
-        writeByteToMemory(address: Int(address), byte: byte)
+        writeByteToMemory(address: address, byte: byte)
     }
     
     func adc(operand: Byte) {

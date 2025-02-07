@@ -16,7 +16,7 @@ struct C64View: View {
                 .frame(width: 320, height: 200)
                 .padding()
             Button("C64 Reset") {
-                c64Emulator.reset()
+                c64Emulator.writeScreen()
             }
         }
     }

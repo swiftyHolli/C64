@@ -21,6 +21,15 @@ class VIC: ObservableObject {
         timerVic = Timer.scheduledTimer(timeInterval: 0.0001, target: self, selector: #selector(rasterInterrupt), userInfo: "vic", repeats: true)
     }
 
+    
+    func getRegister(address: Int)->Byte {
+        return 0
+    }
+
+    func setRegister(address: Int, byte: Byte) {
+        
+    }
+
     let controlRegister1:   Int = 0x11
     let controlRegister2:   Int = 0x16
     let memoryPointers:     Int = 0x18
@@ -77,7 +86,6 @@ class VIC: ObservableObject {
     func fillVideoBuffer(forScanline scanline: Int) {
         let RSEL = c64.memory[address + controlRegister1] & 0b00001000 > 0
         let CSEL = c64.memory[address + controlRegister2] & 0b00001000 > 0
-        c64.mos6502.stopTimer()
         //video memory bank set bank for test
         c64.memory[address + memoryPointers] = 0b00100000
         
@@ -97,7 +105,6 @@ class VIC: ObservableObject {
                 }
             }
         }
-        c64.mos6502.startTimer()
         func colorFromCode(_ code: Byte)->CGColor {
             switch code & 0x0F {
             case 0:
