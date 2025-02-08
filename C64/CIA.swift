@@ -146,6 +146,19 @@ class CIA {
         }
     }
     
+    func setPortA(value: Byte) {
+        registers.values[Registers.PRA] = ~registers.values[Registers.DDRA] & value
+    }
+    func setPortB(value: Byte) {
+        registers.values[Registers.PRB] = ~registers.values[Registers.DDRB] & value
+    }
+    func getPortA() -> Byte {
+        return registers.values[Registers.PRA]
+    }
+    func getPortB() -> Byte {
+        return registers.values[Registers.PRB]
+    }
+
     func clock()->Bool {
         handleTimerA()
         //handleTimerB()

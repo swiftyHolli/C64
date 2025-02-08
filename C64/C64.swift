@@ -12,6 +12,7 @@ class C64: ObservableObject {
     static let shared = C64()
     
     var vic: VICII?
+    var keyboard: Keyboard?
     
     struct C64Adresses {
         static let CharacterROM = (start: Word(0xD000), end: Word(0xDFFF))
@@ -98,12 +99,16 @@ class C64: ObservableObject {
     
     @objc func clock() {
         guard vic != nil else { return }
-        vic?.clock()
-        mos6502.execute()
+        if mos6502.cycles == 0 {
+            mos6502.execute()
+            vic?.clock()
+        }
         if(cia1.clock()) == true {
             mos6502.INT = true
         }
         _ = cia2.clock()
+        keyboard?.clock()
+        mos6502.cycles -= 1
         clockTimer?.invalidate()
         clockTimer = nil
         startTimer()

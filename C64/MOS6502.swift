@@ -112,7 +112,7 @@ class MOS6502 {
     @objc func execute() {        
         if INT { INThandler() }
         
-        if PC == 0xe716
+        if PC == 0xEAA5
         {
             stop += 1
         }

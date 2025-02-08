@@ -16,7 +16,7 @@ struct TVScreen: View {
                 .frame(width: 320, height: 200)
             Text("\(vic.counter)")
             Button("fill Screen") {
-                vic.c64.memory[0x400] = 1
+                vic.c64.cia1.setPortB(value: 0b11101111)
             }
         }
     }

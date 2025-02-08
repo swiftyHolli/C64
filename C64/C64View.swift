@@ -14,6 +14,18 @@ struct C64View: View {
             TVScreen()
                 .frame(width: 320, height: 200)
                 .padding()
+            KeyboardView()
+        }
+    }
+}
+
+struct KeyboardView: View {
+    @ObservedObject var keyboard = Keyboard()
+    
+    var body: some View {
+        HStack {
+            Button("A") {keyboard.keyPressed(10)}
+            Button("B") {keyboard.keyPressed(28)}
         }
     }
 }
