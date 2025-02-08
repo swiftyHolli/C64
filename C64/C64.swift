@@ -7,7 +7,11 @@
 
 import Foundation
 
-class C64 {
+class C64: ObservableObject {
+    
+    static let shared = C64()
+    
+    var vic: VICII?
     
     struct C64Adresses {
         static let CharacterROM = (start: Word(0xD000), end: Word(0xDFFF))
@@ -29,7 +33,6 @@ class C64 {
     var basicROM = [Byte]()
     var kernalROM = [Byte]()
     
-    var vic:  VICII
     var mos6502: MOS6502
     var cia1: CIA
     var cia2: CIA
@@ -75,11 +78,10 @@ class C64 {
         memory = [Byte](repeating: 0, count: MaxMem)
         cia1 = CIA(address: 0xDC00)
         cia2 = CIA(address: 0xDD00)
-        vic = VICII()
         mos6502 = MOS6502()
         loadROMs()
-        vic.c64 = self
         mos6502.c64 = self
+        mos6502.reset()
         startTimer()
     }
     
@@ -95,12 +97,14 @@ class C64 {
     }
     
     @objc func clock() {
+        guard vic != nil else { return }
+        vic?.clock()
         mos6502.execute()
         if(cia1.clock()) == true {
             mos6502.INT = true
         }
         _ = cia2.clock()
-        vic.clock()
+        clockTimer?.invalidate()
         clockTimer = nil
         startTimer()
     }
@@ -118,7 +122,7 @@ class C64 {
             return characterRom[Int(address - C64Adresses.CharacterROM.start)]
         }
         if (CHAREN && address >= C64Adresses.Vic.start && address <= C64Adresses.Vic.end) {
-            return vic.getRegister(address: Int(address - C64Adresses.Vic.start))
+            return vic?.getRegister(address: Int(address - C64Adresses.Vic.start)) ?? 0
         }
         if (CHAREN && address >= C64Adresses.Cia1.start && address <= C64Adresses.Cia1.end) {
             return cia1.getRegister(address: Int(address - C64Adresses.Cia1.start))
@@ -128,10 +132,10 @@ class C64 {
         }
         return memory[Int(address)]
     }
-
+    
     func writeByteToAddress(_ address: Word, byte: Byte) {
         if (CHAREN && address >= C64Adresses.Vic.start && address <= C64Adresses.Vic.end) {
-            vic.setRegister(address: Int(address - C64Adresses.Vic.start), byte: byte)
+            vic?.setRegister(address: Int(address - C64Adresses.Vic.start), byte: byte)
             return
         }
         if (CHAREN && address >= C64Adresses.Cia1.start && address <= C64Adresses.Cia1.end) {

@@ -8,10 +8,12 @@
 import SwiftUI
 
 class VICII: ObservableObject {
-    var c64: C64!
-    var videoBuffer = [CGColor](repeating: UIColor.blue.cgColor, count: 320 * 200)
-    @Published var canvasBuffer = [CGColor](repeating: UIColor.blue.cgColor, count: 320 * 200)
-
+    
+    var c64 = C64.shared
+    
+    var videoBuffer = [Byte](repeating: 0, count: 320*200)
+    @Published var canvasBuffer = [Byte](repeating: 0, count: 320*200)
+    @Published var counter = 0
     struct Registers {
         var M0X: Byte = 0
         var M0Y: Byte = 0
@@ -61,6 +63,7 @@ class VICII: ObservableObject {
         var M6C: Byte = 0   // color sprite 6
         var M7C: Byte = 0   // color sprite 7
     }
+    
     private var registers = Registers()
     private var yScroll = 0
     private var raster = 0
@@ -74,6 +77,11 @@ class VICII: ObservableObject {
     private let colorMemoryAddress: Int = 0xD800
     
     private var cyclCounter = 0
+    
+    init() {
+        c64.vic = self
+        print("VICII")
+    }
 
     func setRegister(address: Int, byte: Byte) {
         let registerAdress = address & 0x3F
@@ -138,7 +146,7 @@ class VICII: ObservableObject {
         case 24:
             registers.MEMP = byte
             screenMemoryAddress = Int((byte & 0b1111_0000) >> 4) * 1024
-            characterMemoryAddress = Int((byte & 0b0000_1110) >> 1) * 1024
+            characterMemoryAddress = Int((byte & 0b0000_1110) >> 1) * 2048 - 4096
         case 25:
             registers.INTR = byte
         case 26:
@@ -294,7 +302,8 @@ class VICII: ObservableObject {
             return 0
         }
     }
-    
+
+        
     func clock() {
         cyclCounter += 1
         if(cyclCounter > 62) {
@@ -310,6 +319,7 @@ class VICII: ObservableObject {
         }
         if(raster == 247 && cyclCounter == 0) {
             canvasBuffer = videoBuffer
+            //counter += 1
         }
     }
     
@@ -329,56 +339,17 @@ class VICII: ObservableObject {
     }
     
     func decodeEightPixels() {
-        let pixelLine = (raster - 48) % 8
+        let pixelLine = (raster - 48 + yScroll + 1) % 8
         let colorCode = colorLineBuffer[cyclCounter - 16]
-        let characterLineBits = characterPixelBuffer[pixelLine]
+        let characterLineBits = characterLineBuffer[cyclCounter - 16][pixelLine]
         for pixel in 0..<8 {
-            let pixelColor = (characterLineBits & (0x80 >> pixel)) > 0 ?  colorFromCode(colorCode) : colorFromCode(registers.B0C)
+            let pixelColor = (characterLineBits & (0x80 >> pixel)) > 0 ?  colorCode : registers.B0C
             videoBuffer[(raster - 48) * 320 + (cyclCounter - 16) * 8 + pixel] = pixelColor
         }
     }
-    
-    func colorFromCode(_ code: Byte)->CGColor {
-        switch code & 0x0F {
-        case 0:
-            return CGColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
-        case 1:
-            return CGColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
-        case 2:
-            return CGColor(red: 104 / 255, green: 55 / 255, blue: 43 / 255, alpha: 1.0)
-        case 3:
-            return CGColor(red: 112 / 255, green: 164 / 255, blue: 178 / 255, alpha: 1.0)
-        case 4:
-            return CGColor(red: 111 / 255, green: 61 / 255, blue: 134 / 255, alpha: 1.0)
-        case 5:
-            return CGColor(red: 88 / 255, green: 141 / 255, blue: 67 / 255, alpha: 1.0)
-        case 6:
-            return CGColor(red: 53 / 255, green: 40 / 255, blue: 178 / 121, alpha: 1.0)
-        case 7:
-            return CGColor(red: 184 / 255, green: 199 / 255, blue: 111 / 255, alpha: 1.0)
-        case 8:
-            return CGColor(red: 112 / 255, green: 79 / 255, blue: 37 / 255, alpha: 1.0)
-        case 9:
-            return CGColor(red: 67 / 255, green: 57 / 255, blue: 0 / 255, alpha: 1.0)
-        case 10:
-            return CGColor(red: 154 / 255, green: 103 / 255, blue: 89 / 255, alpha: 1.0)
-        case 11:
-            return CGColor(red: 68 / 255, green: 68 / 255, blue: 68 / 255, alpha: 1.0)
-        case 12:
-            return CGColor(red: 108 / 255, green: 108 / 255, blue: 108 / 255, alpha: 1.0)
-        case 13:
-            return CGColor(red: 154 / 255, green: 210 / 255, blue: 132 / 255, alpha: 1.0)
-        case 14:
-            return CGColor(red: 108 / 255, green: 94 / 255, blue: 181 / 255, alpha: 1.0)
-        case 15:
-            return CGColor(red: 149 / 255, green: 149 / 255, blue: 149 / 255, alpha: 1.0)
-        default:
-            return UIColor.blue.cgColor
-        }
-    }
-
     
     func isBadLine()->Bool {
         raster >= 48 && raster < 247 && raster & 0x07 == yScroll && cyclCounter == 0
     }
 }
+
