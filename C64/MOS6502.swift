@@ -112,7 +112,7 @@ class MOS6502 {
     @objc func execute() {        
         if INT { INThandler() }
         
-        if PC == 0xEAA5
+        if D == true
         {
             stop += 1
         }
@@ -1072,7 +1072,6 @@ class MOS6502 {
             V = TC && (((A ^ operand) & 0x80) > 0) //true bei ungleich
         }
     }
-    
     
     func cmp(operand: Byte, register: Byte) {
         Z = operand == register

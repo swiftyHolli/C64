@@ -16,6 +16,7 @@ struct C64View: View {
                 .padding()
             KeyboardView()
         }
+        Spacer()
     }
 }
 
@@ -23,6 +24,18 @@ struct KeyboardView: View {
     @ObservedObject var keyboard = Keyboard()
     
     var body: some View {
+        HStack {
+            Button("1") {keyboard.keyPressed(56)}
+            Button("2") {keyboard.keyPressed(59)}
+            Button("3") {keyboard.keyPressed(08)}
+            Button("4") {keyboard.keyPressed(11)}
+            Button("5") {keyboard.keyPressed(16)}
+            Button("6") {keyboard.keyPressed(19)}
+            Button("7") {keyboard.keyPressed(24)}
+            Button("8") {keyboard.keyPressed(27)}
+            Button("9") {keyboard.keyPressed(32)}
+            Button("0") {keyboard.keyPressed(35)}
+        }
         HStack {
             Button("Q") {keyboard.keyPressed(62)}
             Button("W") {keyboard.keyPressed(09)}
@@ -49,6 +62,23 @@ struct KeyboardView: View {
             Button(";") {keyboard.keyPressed(50)}
             Button("Enter") {keyboard.keyPressed(01)}
 
+        }
+        HStack {
+            Button("Y") {keyboard.keyPressed(25)}
+            Button("X") {keyboard.keyPressed(23)}
+            Button("C") {keyboard.keyPressed(20)}
+            Button("V") {keyboard.keyPressed(31)}
+            Button("B") {keyboard.keyPressed(28)}
+            Button("N") {keyboard.keyPressed(39)}
+            Button("M") {keyboard.keyPressed(36)}
+            Button(",") {keyboard.keyPressed(47)}
+            Button(".") {keyboard.keyPressed(44)}
+            Button("-") {keyboard.keyPressed(43)}
+        }
+        HStack {
+            Button("Shift") {keyboard.keyPressed(15)}
+            Button("Space") {keyboard.keyPressed(60)}
+            Button("Shift") {keyboard.keyPressed(52)}
         }
     }
 }
