@@ -45,7 +45,9 @@ class Keyboard: ObservableObject {
                               
         }
         if (PortALinesForKey(controlKey.rawValue) ^ c64.cia1.getPortA() == 0 && controlKey != .none) {
-            c64.cia1.setPortB(value: PortBLinesForKey(controlKey.rawValue) & c64.cia1.getPortB())
+            if(controlKey != .none) {
+                c64.cia1.setPortB(value: PortBLinesForKey(controlKey.rawValue) & c64.cia1.getPortB())
+            }
         }
 
         if clocksuntilRelaese > 0 {

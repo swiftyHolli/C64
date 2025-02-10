@@ -112,7 +112,7 @@ class MOS6502 {
     @objc func execute() {        
         if INT { INThandler() }
         
-        if D == true
+        if PC == 0xa7ef
         {
             stop += 1
         }
@@ -138,9 +138,9 @@ class MOS6502 {
         case JMP_ABI:
             PC = fetchAddressAbsolutePCIndirect()
         case JSR_AB:
-            c64.memory[Int(SP) + 0x100] = Byte(((PC + 2)>>8) & 0xFF)
+            c64.memory[Int(SP) + 0x100] = Byte(((PC + 1)>>8) & 0xFF)
             SP -= 1
-            c64.memory[Int(SP) + 0x100] = Byte((PC + 2) & 0xFF)
+            c64.memory[Int(SP) + 0x100] = Byte((PC + 1) & 0xFF)
             SP -= 1
             PC = fetchAddressAbsolutePC()
             cycles += 3
@@ -160,6 +160,7 @@ class MOS6502 {
             SP += 1
             let highByte = Word(c64.memory[Int(SP) + 0x100])<<8
             PC = highByte | lowByte
+            PC += 1
             cycles += 5
         case NOP:
             cycles += 1
@@ -365,7 +366,7 @@ class MOS6502 {
         case ASL_AB:
             var op = fetchByteAbsolutePC()
             let a: Word = Word(op) << 1
-            C = a & 0b100000000 > 0
+            C = a & 0b1_0000_0000 > 0
             op = op << 1
             Z = op == 0
             N = op & 0b10000000 > 0
@@ -578,18 +579,18 @@ class MOS6502 {
             N = A & 0b10000000 > 0
             
         case BIT_AB:
-            let op = fetchByteAbsolutePC()
+            var op = fetchByteAbsolutePC()
+            op = A & op
             N = op & 0b10000000 > 0
             V = op & 0b01000000 > 0
-            A = A & op
-            Z = A == 0
+            Z = op == 0
         case BIT_ZP:
-            let op = fetchByteZeropage()
+            var op = fetchByteZeropage()
             N = op & 0b10000000 > 0
             V = op & 0b01000000 > 0
-            A = A & op
-            Z = A == 0
-            
+            op = A & op
+            Z = op == 0
+
         case EOR_IM:
             let op = fetchByteImmediatePC()
             A = A ^ op
@@ -1025,58 +1026,54 @@ class MOS6502 {
     }
     
     func adc(operand: Byte) {
-        if !D {
-            // binary mode
-            var op = Word(operand)
-            TC = !(((A ^ operand) & 0x80) > 0) // true if the sign bits are eqal
-            op = op + Word(A)
-            if C { op += 1}
-            C = op > 0xFF
-            A = Byte(op & 0xFF)
-            Z = A == 0
-            N = A & 0x80 > 0
-            V = TC && (((A ^ operand) & 0x80) > 0) //true if the sign bits differ
+        let op = Word(operand)
+        var tmp = op + Word(A) + Word((C ? 1 : 0))
+        Z = tmp & 0xFF == 0
+        if (D)
+        {
+            if (((Word(A) & 0xF) + (op & 0xF) + (C ? 1 : 0)) > 9) { tmp += 6 }
+            N = tmp & 0x80 > 0
+            V = (!((Word(A) ^ op) & 0x80 > 0) && ((Word(A) ^ tmp) & 0x80 > 0));
+            if (tmp > 0x99)
+            {
+                tmp += 96
+            }
+            C = tmp > 0x99
         }
-        else {
-            // dezimal mode
-            var op1 = Word(A)
-            let op2 = Word(operand)
-            TC = !(((A ^ operand) & 0x80) > 0)
-            var AL = (op1 & 0x0F) + (op2 & 0x0F) + (C ? 0x01 : 0x00)
-            if(AL >= 0x0A) { AL = ((AL + 0x06) & 0x0F) + 0x10 }
-            op1 = (op1 & 0xF0) + (op2 & 0xF0) + AL
-            if(op1 >= 0xA0) { op1 += 0x60 }
-            A = Byte(op1 & 0xFF)
-            C = op1 >= 0x100
-            Z = A == 0 // same as in binary mode
-            N = A & 0x80 > 0
-            V = TC && (((A ^ operand) & 0x80) > 0) //true bei ungleich
+        else
+        {
+            N = tmp & 0x80 > 0
+            V = !((Word(A) ^ op) & 0x80 > 0) && ((Word(A) ^ tmp) & 0x80 > 0)
+            C = tmp > 0xFF
         }
+        A = Byte(tmp & 0xFF)
     }
     
     func sbc(operand: Byte) {
-        if(!D) {
-            adc(operand: ~operand)
+        let op: Word = Word(~operand)
+        var tmp: Word = Word(A) &+ op &+ Word(C ? 1 : 0)
+        N = tmp & 0x80 > 0
+        Z = tmp & 0xFF == 0
+        V = (Word(A) ^ tmp) & 0x80 > 0 && (Word(A) ^ op) & 0x80 > 0
+        
+        if (D)
+        {
+            if ((A & 0x0F) - (C ? 0 : 1)) < (op & 0x0F) { tmp -= 6 }
+            if (tmp > 0x99)
+            {
+                tmp -= 0x60
+            }
         }
-        else {
-            var op1 = Int16(A)
-            let op2 = Int16(operand)
-            TC = !(((A ^ operand) & 0x80) > 0)
-            var AL = (op1 & 0x0F) - ((op2 & 0x0F) + (C ? 1 : 0) - 1)
-            if(AL < 0) { AL = ((AL -  0x06) & 0x0F) - 0x10 }
-            op1 = (op1 & 0xF0) - (op2 & 0xF0) + AL
-            if (op1 < 0) { op1 -= 0x60 }
-            A = Byte(op1 & 0xFF)
-            C = op1 >= 0
-            N = A & 0x80 > 0
-            V = TC && (((A ^ operand) & 0x80) > 0) //true bei ungleich
-        }
+        C = tmp > 0xFF
+        A = Byte(tmp & 0xFF)
     }
     
     func cmp(operand: Byte, register: Byte) {
-        Z = operand == register
-        C = operand <= register
-        N = (Int(register) - Int(operand)) & 0b10000000 > 0
+        let op = Word(~operand)
+        let result = Word(register) + op + 1
+        Z = result & 0xFF == 0
+        C = result > 0xFF
+        N = result & 0b10000000 > 0
     }
     
     func prepareForTest(address: Int, bytes: [Byte]) {

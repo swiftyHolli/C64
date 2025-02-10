@@ -25,6 +25,7 @@ struct KeyboardView: View {
     
     var body: some View {
         HStack {
+            Button("<-") {keyboard.keyPressed(00)}
             Button("1") {keyboard.keyPressed(56)}
             Button("2") {keyboard.keyPressed(59)}
             Button("3") {keyboard.keyPressed(08)}
@@ -60,6 +61,7 @@ struct KeyboardView: View {
             Button("L") {keyboard.keyPressed(42)}
             Button(":") {keyboard.keyPressed(45)}
             Button(";") {keyboard.keyPressed(50)}
+            Button("=") {keyboard.keyPressed(53)}
             Button("Enter") {keyboard.keyPressed(01)}
 
         }
