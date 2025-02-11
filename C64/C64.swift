@@ -8,6 +8,7 @@
 import Foundation
 
 class C64: ObservableObject {
+    var elapsedTime: Int = 0
     
     static let shared = C64()
     
@@ -83,7 +84,24 @@ class C64: ObservableObject {
         loadROMs()
         mos6502.c64 = self
         mos6502.reset()
-        startTimer()
+        run()
+        //startTimer()
+    }
+    
+    func run() {
+        DispatchQueue.global(qos: .userInteractive).async {
+            while true {
+                let startTime = DispatchTime.now()
+                for _ in 0..<1000 {
+                    self.clock()
+                }
+                let endTime = DispatchTime.now()
+                DispatchQueue.main.async {
+                    self.elapsedTime = Int((endTime.uptimeNanoseconds - startTime.uptimeNanoseconds) / 1000)
+                }
+                usleep(1000)
+            }
+        }
     }
     
     func startTimer() {
@@ -111,7 +129,7 @@ class C64: ObservableObject {
         mos6502.cycles -= 1
         clockTimer?.invalidate()
         clockTimer = nil
-        startTimer()
+        //startTimer()
     }
 
     

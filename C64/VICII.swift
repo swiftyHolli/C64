@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 class VICII: ObservableObject {
     
@@ -13,7 +14,7 @@ class VICII: ObservableObject {
     
     var videoBuffer = [Byte](repeating: 0, count: 320*200)
     @Published var canvasBuffer = [Byte](repeating: 0, count: 320*200)
-    @Published var counter = 0
+        
     struct Registers {
         var M0X: Byte = 0
         var M0Y: Byte = 0
@@ -65,11 +66,11 @@ class VICII: ObservableObject {
     }
     
     private var registers = Registers()
-    private var yScroll = 0
+    var yScroll = 0
     private var raster = 0
     
     private var characterPixelBuffer = [Byte](repeating: 0, count: 8)
-    private var characterLineBuffer = [[Byte]]()
+    private var characterLineBuffer = [Byte](repeating: 0, count: 8 * 40)
     private var colorLineBuffer = [Byte](repeating: 0, count: 40)
 
     private var screenMemoryAddress = 0
@@ -318,38 +319,47 @@ class VICII: ObservableObject {
             decodeEightPixels()
         }
         if(raster == 247 && cyclCounter == 0) {
-            canvasBuffer = videoBuffer
-            //counter += 1
+            DispatchQueue.main.async {[weak self] in
+                self?.canvasBuffer = self?.videoBuffer ?? [Byte]()
+                
+            }
         }
     }
     
     func badLine() {
         // decode one line out from the video buffer
         // fill line buffer
-        characterLineBuffer.removeAll(keepingCapacity: true)
-        let characterLine = (raster - 48) / 8
+        if yScroll == 3 {
+            let a = 1
+        }
+        var characterLine = (raster - 48) / 8
+        if characterLine < 0 { characterLine = 24 }
+        if characterLine > 24 { characterLine = 0 }
         for characterIndex in 0..<40 {
             let character = c64.memory[(screenMemoryAddress + characterIndex + characterLine * 40)]
             colorLineBuffer[characterIndex] = c64.memory[(colorMemoryAddress + characterIndex + characterLine * 40)]
             for i in 0..<8 {
-                characterPixelBuffer[i] = c64.characterRom[characterMemoryAddress + Int(character) * 8 + i]
+                characterLineBuffer[characterIndex * 8 + i] = c64.characterRom[characterMemoryAddress + Int(character) * 8 + i]
             }
-            characterLineBuffer.append(characterPixelBuffer)
         }
     }
     
     func decodeEightPixels() {
-        let pixelLine = (raster - 48 + yScroll + 1) % 8
+        if yScroll == 3 {
+            let a = 1
+        }
+        let pixelLine = (raster - 49 - yScroll + 3) % 8
         let colorCode = colorLineBuffer[cyclCounter - 16]
-        let characterLineBits = characterLineBuffer[cyclCounter - 16][pixelLine]
+        let characterLineBits = characterLineBuffer[(cyclCounter - 16) * 8 + pixelLine]
         for pixel in 0..<8 {
             let pixelColor = (characterLineBits & (0x80 >> pixel)) > 0 ?  colorCode : registers.B0C
-            videoBuffer[(raster - 48) * 320 + (cyclCounter - 16) * 8 + pixel] = pixelColor
+            videoBuffer[(raster - 49) * 320 + (cyclCounter - 16) * 8 + pixel] = pixelColor
         }
     }
     
     func isBadLine()->Bool {
-        raster >= 48 && raster < 247 && raster & 0x07 == yScroll && cyclCounter == 0
+        raster >= 48 && raster < 248 && cyclCounter == 0 //(raster & 0x07 == yScroll) &&
     }
+    
 }
 

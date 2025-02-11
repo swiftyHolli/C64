@@ -7,7 +7,7 @@
 
 import Foundation
 
-class CIA {
+struct CIA {
     private struct Registers {
         static let PRA = 0x00
         static let PRB = 0x01
@@ -48,7 +48,7 @@ class CIA {
         print("CIA")
     }
     
-    func getRegister(address: Int)->Byte {
+    mutating func getRegister(address: Int)->Byte {
         switch address & 0x00FF{
         case Registers.PRA:
             return registers.values[Registers.PRA]
@@ -90,7 +90,7 @@ class CIA {
         return 0
     }
 
-    func setRegister(address: Int, byte: Byte) {
+    mutating func setRegister(address: Int, byte: Byte) {
         switch address & 0x00FF{
         case Registers.PRA:
             let inputLines = registers.values[Registers.PRA] & ~registers.values[Registers.DDRA]
@@ -146,10 +146,10 @@ class CIA {
         }
     }
     
-    func setPortA(value: Byte) {
+    mutating func setPortA(value: Byte) {
         registers.values[Registers.PRA] = ~registers.values[Registers.DDRA] & value
     }
-    func setPortB(value: Byte) {
+    mutating func setPortB(value: Byte) {
         registers.values[Registers.PRB] = ~registers.values[Registers.DDRB] & value
     }
     func getPortA() -> Byte {
@@ -159,13 +159,13 @@ class CIA {
         return registers.values[Registers.PRB]
     }
 
-    func clock()->Bool {
+    mutating func clock()->Bool {
         handleTimerA()
         //handleTimerB()
         return registers.values[Registers.ICR] & 0b1000_0000 > 0
     }
     
-    private func handleTimerA() {
+    mutating private func handleTimerA() {
         if(registers.values[Registers.CRA] & 0b0000_0001 > 0) {
             // Timer started
             if timerA > 0 { timerA -= 1 }

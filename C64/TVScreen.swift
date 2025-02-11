@@ -12,22 +12,19 @@ struct TVScreen: View {
     @ObservedObject var vic = VICII()
     var body: some View {
         VStack {
-            DrawViewUIViewRepresentable(pixels: $vic.canvasBuffer, counter: $vic.counter)
+            DrawViewUIViewRepresentable(pixels: $vic.canvasBuffer)
                 .frame(width: 320, height: 200)
-            Text("\(vic.counter)")
-            Button("fill Screen") {
-                vic.c64.cia1.setPortB(value: 0b11101111)
-            }
+            Text("Time: \(vic.c64.elapsedTime)")
+
         }
     }
 }
 
 struct DrawViewUIViewRepresentable: UIViewRepresentable {
     @Binding var pixels: [Byte]
-    @Binding var counter: Int
     
     func makeUIView(context: Context) -> DrawView {
-        return DrawView(frame: CGRect(origin: .zero, size: CGSize(width: 320, height: 200)), pixels: pixels, counter: counter)
+        return DrawView(frame: CGRect(origin: .zero, size: CGSize(width: 320, height: 200)), pixels: pixels)
     }
     
     func updateUIView(_ uiView: DrawView, context: Context) {
@@ -42,21 +39,21 @@ class DrawView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    init(frame: CGRect, pixels: [Byte], counter: Int) {
+    init(frame: CGRect, pixels: [Byte]) {
         self.pixelBuffer = pixels
-        self.counter = counter
         super.init(frame: frame)
     }
     
     var pixelBuffer: [Byte]
-    var counter: Int
     
     public override func draw(_ rect: CGRect) {
         super.draw(rect)
         guard let context = UIGraphicsGetCurrentContext()
         else { return }
         for i in 0..<(320 * 200){
-            context.addRect(CGRect(x: i % 320, y: i / 320, width: 1, height: 1))
+            context.setLineWidth(1)
+            context.move(to: CGPoint(x: i % 320, y: i / 320))
+            context.addLine(to: CGPoint(x: i % 320, y: i / 320 + 1))
             context.setStrokeColor(colorFromCode(pixelBuffer[i]))
             context.strokePath()
         }

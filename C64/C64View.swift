@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct C64View: View {
-        
+    @ObservedObject var c64 = C64.shared
     var body: some View {
         VStack {
             TVScreen()
