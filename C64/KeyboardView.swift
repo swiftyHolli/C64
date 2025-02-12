@@ -11,91 +11,80 @@ struct KeyboardView: View {
     @ObservedObject var keyboard = Keyboard()
     
     var body: some View {
-        VStack(spacing: 2) {
-            HStack(spacing: 2){
-                Button {
-                    keyboard.keyPressed(00)
-                } label: {
-                    Image(systemName: "delete.left")
-                }
-                
-                Button("1") {keyboard.keyPressed(56)}
-                Button("2") {keyboard.keyPressed(59)}
-                Button("3") {keyboard.keyPressed(08)}
-                Button("4") {keyboard.keyPressed(11)}
-                Button("5") {keyboard.keyPressed(16)}
-                Button("6") {keyboard.keyPressed(19)}
-                Button("7") {keyboard.keyPressed(24)}
-                Button("8") {keyboard.keyPressed(27)}
-                Button("9") {keyboard.keyPressed(32)}
-                Button("0") {keyboard.keyPressed(35)}
-                Button("+") {keyboard.keyPressed(40)}
-                Button("-") {keyboard.keyPressed(43)}
-                Button("£") {keyboard.keyPressed(48)}
-                
+        VStack(spacing: 1) {
+            HStack(spacing: 1){
+                KeyboardButton(vm: keyboard, "←", "←", "←", " ",0 , 0, code: 00)
+                KeyboardButton(vm: keyboard, "1", "!", "◉", "◉", 08, 00, code: 56)
+                KeyboardButton(vm: keyboard, "2", "\"", "◉", "◉", 09 , 01, code: 59)
+                KeyboardButton(vm: keyboard, "3", "#", "◉", "◉", 10 , 02 , code: 08)
+                KeyboardButton(vm: keyboard, "4", "$", "◉", "◉", 11 , 03 , code: 11)
+                KeyboardButton(vm: keyboard, "5", "%", "◉", "◉", 12 , 04 , code: 16)
+                KeyboardButton(vm: keyboard, "6", "&", "◉", "◉", 13 , 05 , code: 19)
+                KeyboardButton(vm: keyboard, "7", "/", "◉", "◉", 14 , 06 , code: 24)
+                KeyboardButton(vm: keyboard, "8", "(", "◉", "◉", 15 , 07 , code: 27)
+                KeyboardButton(vm: keyboard, "9", ")", "◉", "◉", 16 , 08 , code: 32)
+                KeyboardButton(vm: keyboard, "0", ")", "◉", "◉", 17 , 09 , code: 35)
+                KeyboardButton(vm: keyboard, "+", "+", "▒", " ", 0 , 0 , code: 40)
+                KeyboardButton(vm: keyboard, "-", "│", "🮌", " ", 0 , 0 , code: 43)
+                KeyboardButton(vm: keyboard, "£", "◤", "🮏", " ", 0 , 0 , code: 48)
             }
-            .buttonStyle(KeyboardButtonStyle())
-            HStack(spacing: 2) {
-                Button("CTRL") {keyboard.keyPressed(58)}
-                Button("Q") {keyboard.keyPressed(62)}
-                Button("W") {keyboard.keyPressed(09)}
-                Button("E") {keyboard.keyPressed(14)}
-                Button("R") {keyboard.keyPressed(17)}
-                Button("T") {keyboard.keyPressed(22)}
-                Button("Y") {keyboard.keyPressed(25)}
-                Button("U") {keyboard.keyPressed(30)}
-                Button("I") {keyboard.keyPressed(33)}
-                Button("O") {keyboard.keyPressed(38)}
-                Button("P") {keyboard.keyPressed(41)}
-                Button("@") {keyboard.keyPressed(46)}
-                Button("*") {keyboard.keyPressed(49)}
+            HStack(spacing: 1) {
+                ControlButton(keyboard: keyboard)
+                KeyboardButton(vm: keyboard, "Q", "•", "├", "↓", 00, 00, code: 62)
+                KeyboardButton(vm: keyboard, "W", "○", "┤", " ", 00, 00, code: 09)
+                KeyboardButton(vm: keyboard, "E", "▔", "┴", " ", 00, 00, code: 14)
+                KeyboardButton(vm: keyboard, "R", "▁", "┬", " ", 00, 00, code: 17)
+                KeyboardButton(vm: keyboard, "T", "▏", "▔", " ", 00, 00, code: 22)
+                KeyboardButton(vm: keyboard, "Y", "▕", "", " ", 00, 00, code: 25)
+                KeyboardButton(vm: keyboard, "U", "╭", "", " ", 00, 00, code: 30)
+                KeyboardButton(vm: keyboard, "I", "╮", "▄", " ", 00, 00, code: 33)
+                KeyboardButton(vm: keyboard, "O", "", "▃", " ", 00, 00, code: 38)
+                KeyboardButton(vm: keyboard, "P", "", "▂", " ", 00, 00, code: 41)
+                KeyboardButton(vm: keyboard, "@", "", "▁", " ", 00, 00, code: 46)
+                KeyboardButton(vm: keyboard, "*", "", "▁", " ", 00, 00, code: 49)
             }
-            .buttonStyle(KeyboardButtonStyle())
-            
-            HStack(spacing: 2) {
-                Button("A") {keyboard.keyPressed(10)}
-                Button("S") {keyboard.keyPressed(13)}
-                Button("D") {keyboard.keyPressed(18)}
-                Button("F") {keyboard.keyPressed(21)}
-                Button("G") {keyboard.keyPressed(26)}
-                Button("H") {keyboard.keyPressed(29)}
-                Button("J") {keyboard.keyPressed(34)}
-                Button("K") {keyboard.keyPressed(37)}
-                Button("L") {keyboard.keyPressed(42)}
-                Button(":") {keyboard.keyPressed(45)}
-                Button(";") {keyboard.keyPressed(50)}
-                Button("=") {keyboard.keyPressed(53)}
-                Button("Enter") {keyboard.keyPressed(01)}
+
+            HStack(spacing: 1) {
+                ShiftLockButton(keyboard: keyboard)
+                KeyboardButton(vm: keyboard,"A", "♠", "┌", " ",0 , 0, code: 10)
+                KeyboardButton(vm: keyboard,"S", "♥", "┐", " ",0 , 0, code: 13)
+                KeyboardButton(vm: keyboard,"D", "♥", "", " ",0 , 0, code: 18)
+                KeyboardButton(vm: keyboard,"F", "", "▖", " ",0 , 0, code: 21)
+                KeyboardButton(vm: keyboard,"G", "", "▏", " ",0 , 0, code: 26)
+                KeyboardButton(vm: keyboard,"H", "", "▎", " ",0 , 0, code: 29)
+                KeyboardButton(vm: keyboard,"J", "╰", "▍", " ",0 , 0, code: 34)
+                KeyboardButton(vm: keyboard,"K", "╯", "▌", " ",0 , 0, code: 37)
+                KeyboardButton(vm: keyboard,"L", "", "", " ",0 , 0, code: 42)
+                KeyboardButton(vm: keyboard,":", "[", "[", " ",0 , 0, code: 45)
+                KeyboardButton(vm: keyboard,";", "]", "]", " ",0 , 0, code: 50)
+                KeyboardButton(vm: keyboard,"=", "=", "=", " ",0 , 0, code: 53)
+                KeyboardButton(vm: keyboard,"↲", "↲", "↲", " ",0 , 0, code: 01)
                 
             }
-            HStack(spacing: 2) {
-                Button("Z") {keyboard.keyPressed(12)}
-                Button("X") {keyboard.keyPressed(23)}
-                Button("C") {keyboard.keyPressed(20)}
-                Button("V") {keyboard.keyPressed(31)}
-                Button("B") {keyboard.keyPressed(28)}
-                Button("N") {keyboard.keyPressed(39)}
-                Button("M") {keyboard.keyPressed(36)}
-                Button(",") {keyboard.keyPressed(47)}
-                Button(".") {keyboard.keyPressed(44)}
-                Button("/") {keyboard.keyPressed(55)}
+
+            HStack(spacing: 1) {
+                ShiftButton(keyboard: keyboard, code: 15)
+                KeyboardButton(vm: keyboard,"Z", "♦", "└", " ",0 , 0, code: 12)
+                KeyboardButton(vm: keyboard,"X", "♣", "┘", " ",0 , 0, code: 23)
+                KeyboardButton(vm: keyboard,"C", "", "▝", " ",0 , 0, code: 20)
+                KeyboardButton(vm: keyboard,"V", "╳", "▘", " ",0 , 0, code: 31)
+                KeyboardButton(vm: keyboard,"B", "", "▚", " ",0 , 0, code: 28)
+                KeyboardButton(vm: keyboard,"N", "╱", "", " ",0 , 0, code: 39)
+                KeyboardButton(vm: keyboard,"M", "╲", "▕", " ",0 , 0, code: 36)
+                KeyboardButton(vm: keyboard,",", "<", "<", " ",0 , 0, code: 47)
+                KeyboardButton(vm: keyboard,".", ">", ">", " ",0 , 0, code: 44)
+                KeyboardButton(vm: keyboard,"/", "?", "?", " ",0 , 0, code: 44)
+                ShiftButton(keyboard: keyboard, code: 52)
             }
             HStack(spacing: 2) {
-                Button("STOP") {keyboard.keyPressed(63)}
-                    .font(.caption)
-                Button {
-                    keyboard.keyPressed(15)
-                } label: {
-                    Image(systemName: "shift.fill")
-                }
-                
-                Button("Space") {keyboard.keyPressed(60)}
-                Button {
-                    keyboard.keyPressed(52)
-                } label: {
-                    Image(systemName: "shift.fill")
-                }
+                ComodoreButton(keyboard: keyboard)
+                KeyboardButton(vm: keyboard,"Stop", "Load", "Load", " ",0 , 0, code: 63)
+                KeyboardButton(vm: keyboard,"           ", "           ", "           ", "           ",0 , 0, code: 60)
+                KeyboardButton(vm: keyboard,"↑↓", "?", "?", " ",0 , 0, code: 07)
+                KeyboardButton(vm: keyboard,"←→", "?", "?", " ",0 , 0, code: 02)
             }
+
+            .fixedSize(horizontal: false, vertical: true)
         }
         .buttonStyle(KeyboardButtonStyle())
     }

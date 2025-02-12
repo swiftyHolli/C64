@@ -9,6 +9,11 @@ import Foundation
 
 class Keyboard: ObservableObject {
     
+    @Published var shiftLock = false
+    @Published var shift = false
+    @Published var comodore = false
+    @Published var control = false
+
     var c64 = C64.shared
     
     private var keyPressedBuffer = -1
@@ -19,8 +24,8 @@ class Keyboard: ObservableObject {
         case none = 0
         case lShift = 15
         case rShift = 52
-        case ctrl  = 2
-        case commodore = 3
+        case control  = 58
+        case commodore = 61
     }
         
     init() {
@@ -61,13 +66,28 @@ class Keyboard: ObservableObject {
     func keyPressed(_ key: Int) {
         if key == ControlKey.lShift.rawValue {
             controlKey = .lShift
+            shift.toggle()
             return
         }
         if key == ControlKey.rShift.rawValue {
             controlKey = .rShift
+            shift.toggle()
+            return
+        }
+        if key == ControlKey.commodore.rawValue {
+            controlKey = .commodore
+            comodore.toggle()
+            return
+        }
+        if key == ControlKey.control.rawValue {
+            controlKey = .control
+            control.toggle()
             return
         }
         if keyPressedBuffer == -1 {
+            shift = false
+            control = false
+            comodore = false
             keyPressedBuffer = key
             clocksuntilRelaese = 100000
         }

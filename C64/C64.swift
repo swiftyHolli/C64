@@ -90,7 +90,9 @@ class C64: ObservableObject {
         DispatchQueue.global(qos: .userInteractive).async {
             while true {
                 let startTime = DispatchTime.now()
-                self.clock()
+                for _ in 0..<10 {
+                    self.clock()
+                }
                 let endTime = DispatchTime.now()
                 self.elapsedTime = Int((endTime.uptimeNanoseconds - startTime.uptimeNanoseconds) / 1000)
                 usleep(1)

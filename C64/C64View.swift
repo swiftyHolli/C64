@@ -14,7 +14,7 @@ struct C64View: View {
             TVScreen()
                 .frame(width: 320, height: 200)
                 .padding()
-            KeyboardView()
+            KeyboardView(keyboard: Keyboard())
             Button("Poke") {
                 c64.pokeMachineProgram()
             }
