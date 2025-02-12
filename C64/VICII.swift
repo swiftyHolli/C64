@@ -66,8 +66,9 @@ class VICII: ObservableObject {
     }
     
     private var registers = Registers()
-    var yScroll = 0
+    private var yScroll = 0
     private var raster = 0
+    private var rasterInterruptCompare: Int = 0
     
     private var characterPixelBuffer = [Byte](repeating: 0, count: 8)
     private var characterLineBuffer = [Byte](repeating: 0, count: 8 * 40)
@@ -122,15 +123,14 @@ class VICII: ObservableObject {
         case 16:
             registers.MXX8 = byte
         case 17:
-            registers.CR1 = byte
+            registers.CR1 |= byte & 0x7F
             yScroll = Int(byte & 0x7)
-            raster = Int(registers.RASTER)
+            rasterInterruptCompare = Int(registers.RASTER)
             if(byte & 0x80 > 0) {
                 raster += 0x100
             }
         case 18:
-            registers.RASTER = byte
-            raster = Int(byte)
+            rasterInterruptCompare = Int(byte)
             if(registers.CR1 & 0x80 > 0){
                 raster += 0x100
             }
@@ -329,9 +329,6 @@ class VICII: ObservableObject {
     func badLine() {
         // decode one line out from the video buffer
         // fill line buffer
-        if yScroll == 3 {
-            let a = 1
-        }
         var characterLine = (raster - 48) / 8
         if characterLine < 0 { characterLine = 24 }
         if characterLine > 24 { characterLine = 0 }
@@ -345,15 +342,14 @@ class VICII: ObservableObject {
     }
     
     func decodeEightPixels() {
-        if yScroll == 3 {
-            let a = 1
-        }
-        let pixelLine = (raster - 49 - yScroll + 3) % 8
+        let pixelLine = (raster - 49) % 8
         let colorCode = colorLineBuffer[cyclCounter - 16]
         let characterLineBits = characterLineBuffer[(cyclCounter - 16) * 8 + pixelLine]
         for pixel in 0..<8 {
             let pixelColor = (characterLineBits & (0x80 >> pixel)) > 0 ?  colorCode : registers.B0C
-            videoBuffer[(raster - 49) * 320 + (cyclCounter - 16) * 8 + pixel] = pixelColor
+            let videoBufferAddress = (raster - 49 + yScroll - 3) * 320 + (cyclCounter - 16) * 8 + pixel
+            if videoBufferAddress < 0 || videoBufferAddress >= videoBuffer.count { continue }
+            videoBuffer[videoBufferAddress] = pixelColor
         }
     }
     

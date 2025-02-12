@@ -24,8 +24,6 @@ class C64: ObservableObject {
         static let Cia1 = (start: Word(0xDC00), end: Word(0xDCFF))
         static let Cia2 = (start: Word(0xDD00), end: Word(0xDDFF))
     }
-
-    var clockTimer: Timer?
     
     let MaxMem = 1024 * 64
     
@@ -92,28 +90,14 @@ class C64: ObservableObject {
         DispatchQueue.global(qos: .userInteractive).async {
             while true {
                 let startTime = DispatchTime.now()
-                for _ in 0..<1000 {
-                    self.clock()
-                }
+                self.clock()
                 let endTime = DispatchTime.now()
-                DispatchQueue.main.async {
-                    self.elapsedTime = Int((endTime.uptimeNanoseconds - startTime.uptimeNanoseconds) / 1000)
-                }
-                usleep(1000)
+                self.elapsedTime = Int((endTime.uptimeNanoseconds - startTime.uptimeNanoseconds) / 1000)
+                usleep(1)
             }
         }
     }
     
-    func startTimer() {
-        if clockTimer == nil {
-            clockTimer = Timer.scheduledTimer(timeInterval: 0.000_001, target: self, selector: #selector(clock), userInfo: "MOS6502", repeats: false)
-        }
-    }
-    
-    func stopTimer() {
-        clockTimer?.invalidate()
-        clockTimer = nil
-    }
     
     @objc func clock() {
         guard vic != nil else { return }
@@ -127,8 +111,8 @@ class C64: ObservableObject {
         _ = cia2.clock()
         keyboard?.clock()
         mos6502.cycles -= 1
-        clockTimer?.invalidate()
-        clockTimer = nil
+//        clockTimer?.invalidate()
+//        clockTimer = nil
         //startTimer()
     }
 
@@ -204,6 +188,16 @@ class C64: ObservableObject {
                 for index in 0..<romData.count {
                     kernalROM.append(romData[index])
                 }
+            }
+        }
+    }
+    
+    func pokeMachineProgram() {
+        
+        poke(0x1000, [LDA_IM, 0x07, STA_AB, 0x11, 0xD0, BRK])
+        func poke(_ address: Int, _ bytes: [Byte]) {
+            for i in 0..<bytes.count {
+                memory[address + i] = bytes[i]
             }
         }
     }
