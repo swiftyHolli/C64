@@ -12,8 +12,13 @@ struct KeyboardView: View {
     
     var body: some View {
         VStack(spacing: 1) {
+            HStack(spacing: 1) {
+                KeyboardButton(vm: keyboard, "Home", "Clear", "Clear", " ",0 , 0, code: 51)
+                KeyboardButton(vm: keyboard, "Del", "Ins", "Ins", " ",0 , 0, code: 00)
+                KeyboardButton(vm: keyboard, "Restore", "Restore", "Restore", " ",0 , 0, code: 201)
+            }
             HStack(spacing: 1){
-                KeyboardButton(vm: keyboard, "←", "←", "←", " ",0 , 0, code: 00)
+                KeyboardButton(vm: keyboard, "←", "←", "←", " ",0 , 0, code: 57)
                 KeyboardButton(vm: keyboard, "1", "!", "◉", "◉", 08, 00, code: 56)
                 KeyboardButton(vm: keyboard, "2", "\"", "◉", "◉", 09 , 01, code: 59)
                 KeyboardButton(vm: keyboard, "3", "#", "◉", "◉", 10 , 02 , code: 08)
@@ -48,7 +53,7 @@ struct KeyboardView: View {
                 ShiftLockButton(keyboard: keyboard)
                 KeyboardButton(vm: keyboard,"A", "♠", "┌", " ",0 , 0, code: 10)
                 KeyboardButton(vm: keyboard,"S", "♥", "┐", " ",0 , 0, code: 13)
-                KeyboardButton(vm: keyboard,"D", "♥", "", " ",0 , 0, code: 18)
+                KeyboardButton(vm: keyboard,"D", "", "▗", " ",0 , 0, code: 18)
                 KeyboardButton(vm: keyboard,"F", "", "▖", " ",0 , 0, code: 21)
                 KeyboardButton(vm: keyboard,"G", "", "▏", " ",0 , 0, code: 26)
                 KeyboardButton(vm: keyboard,"H", "", "▎", " ",0 , 0, code: 29)
@@ -80,8 +85,8 @@ struct KeyboardView: View {
                 ComodoreButton(keyboard: keyboard)
                 KeyboardButton(vm: keyboard,"Stop", "Load", "Load", " ",0 , 0, code: 63)
                 KeyboardButton(vm: keyboard,"           ", "           ", "           ", "           ",0 , 0, code: 60)
-                KeyboardButton(vm: keyboard,"↑↓", "?", "?", " ",0 , 0, code: 07)
-                KeyboardButton(vm: keyboard,"←→", "?", "?", " ",0 , 0, code: 02)
+                KeyboardButton(vm: keyboard,"↓", "↑", "↑", " ",0 , 0, code: 07)
+                KeyboardButton(vm: keyboard,"←", "→", "→", " ",0 , 0, code: 02)
             }
 
             .fixedSize(horizontal: false, vertical: true)

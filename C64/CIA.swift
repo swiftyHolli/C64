@@ -159,10 +159,13 @@ struct CIA {
         return registers.values[Registers.PRB]
     }
 
-    mutating func clock()->Bool {
+    mutating func clock()->C64.Interrupts {
         handleTimerA()
         //handleTimerB()
-        return registers.values[Registers.ICR] & 0b1000_0000 > 0
+        if (registers.values[Registers.ICR] & 0b1000_0000 > 0) {
+            return .irq
+        }
+        return .none
     }
     
     mutating private func handleTimerA() {

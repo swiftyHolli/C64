@@ -26,23 +26,29 @@ class Keyboard: ObservableObject {
         case rShift = 52
         case control  = 58
         case commodore = 61
+        case shiftLock = 200 // mechanically locked key; parallel connected to the left shift key
+        case resore = 201 //restore button performes an NMI
     }
         
     init() {
         c64.keyboard = self
     }
     
-    func clock() {
+    func clock()->C64.Interrupts {
+        if controlKey == .resore {
+            controlKey = .none
+            return .nmi
+        }
         if keyPressedBuffer == -1 {
             c64.cia1.setPortB(value: 0xFF)
-            return
+            return.none
         }
         if c64.cia1.getPortA() == 0x00 {
             c64.cia1.setPortB(value: PortBLinesForKey(keyPressedBuffer))
             if controlKey != .none {
                 c64.cia1.setPortB(value: PortBLinesForKey(controlKey.rawValue) & c64.cia1.getPortB())
             }
-            return
+            return .none
         }
         c64.cia1.setPortB(value: 0xFF)
         if (PortALinesForKey(keyPressedBuffer) ^ c64.cia1.getPortA() == 0) {
@@ -61,9 +67,16 @@ class Keyboard: ObservableObject {
             keyPressedBuffer = -1
             controlKey = .none
         }
+        return .none
     }
     
     func keyPressed(_ key: Int) {
+        if key == ControlKey.resore.rawValue {
+            controlKey = .resore
+        }
+        if shiftLock {
+            controlKey = .lShift
+        }
         if key == ControlKey.lShift.rawValue {
             controlKey = .lShift
             shift.toggle()
@@ -82,6 +95,11 @@ class Keyboard: ObservableObject {
         if key == ControlKey.control.rawValue {
             controlKey = .control
             control.toggle()
+            return
+        }
+        if key == ControlKey.shiftLock.rawValue {
+            controlKey = .lShift
+            shiftLock.toggle()
             return
         }
         if keyPressedBuffer == -1 {

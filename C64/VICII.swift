@@ -321,7 +321,6 @@ class VICII: ObservableObject {
         if(raster == 247 && cyclCounter == 0) {
             DispatchQueue.main.async {[weak self] in
                 self?.canvasBuffer = self?.videoBuffer ?? [Byte]()
-                
             }
         }
     }

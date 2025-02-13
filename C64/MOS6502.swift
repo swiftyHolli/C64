@@ -70,7 +70,15 @@ class MOS6502 {
     }
     
     func NMIhandler() {
-        
+        c64.memory[Int(SP) + 0x100] = Byte(PC>>8 & 0xFF)
+        SP -= 1
+        c64.memory[Int(SP) + 0x100] = Byte(PC & 0xFF)
+        SP -= 1
+        c64.memory[Int(SP) + 0x100] = PStoByte()
+        SP -= 1
+        I = true
+        NMI = false
+        PC = fetchAddressAbsolute(address: 0xFFFA)
     }
     
     func INThandler() {
@@ -111,11 +119,15 @@ class MOS6502 {
     var stop = 0
     @objc func execute() {        
         if INT { INThandler() }
+        if NMI { NMIhandler() }
         
-        if PC == 0xe38b
+        if PC == 0xf49e
         {
             stop += 1
         }
+        
+        kernalOverrides()
+        
         let instruction = fetchByteImmediatePC() // one cycle
         switch instruction {
             // MARK: - Control Operations
@@ -1075,6 +1087,49 @@ class MOS6502 {
         C = result > 0xFF
         N = result & 0b10000000 > 0
     }
+    
+    private func kernalOverrides() {
+        switch PC {
+            case 0xF4B8:
+            load()
+            case 0xF5DD:
+            save()
+        default:
+            break
+        }
+        return
+        func load() {
+            let address = Int(Word(c64.memory[0xC4]) << 8 | Word(c64.memory[0xC3]))
+            let verify = A > 0
+            let device = Int(c64.memory[0xBA])
+            let normal = c64.memory[0xB9] != 0x00
+            let endAddress = c64.loadFile(filename(), device: device, address: address, verify: verify, normal: normal)
+            c64.memory[0xAE] = Byte(endAddress & 0xFF)
+            c64.memory[0xAF] = Byte(endAddress >> 8)
+            PC = 0xF5A9
+        }
+        func save() {
+            let endAddress = Int(Word(Y) << 8 | Word(X))
+            let lowByte = Word(c64.memory[Int(A)])
+            let highByte = Word(c64.memory[Int(A + 1)])
+            let startAddress = Int(lowByte | highByte << 8)
+            let device = Int(c64.memory[0xBA])
+            let error = c64.saveFile(filename(), device: device, startAddress: startAddress, endAddress: endAddress)
+            PC = 0xF68D
+        }
+        func filename()->String{
+            let fileNameLength = c64.memory[0xB7]
+            var fileNameAddress = Int(Word(c64.memory[0xBC]) << 8 | Word(c64.memory[0xBB]))
+            var fileName: [Byte] = []
+            for _ in 0..<Int(fileNameLength) {
+                fileName.append(c64.memory[Int(fileNameAddress)])
+                fileNameAddress += 1
+            }
+            let fileNameString = String(bytes: fileName, encoding: .ascii)!
+            return fileNameString
+        }
+    }
+        
     
     func prepareForTest(address: Int, bytes: [Byte]) {
         for i in 0..<bytes.count {

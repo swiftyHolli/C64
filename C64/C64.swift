@@ -8,6 +8,13 @@
 import Foundation
 
 class C64: ObservableObject {
+    
+    enum Interrupts: Int {
+        case nmi
+        case irq
+        case none
+    }
+    
     var elapsedTime: Int = 0
     
     static let shared = C64()
@@ -95,23 +102,24 @@ class C64: ObservableObject {
                 }
                 let endTime = DispatchTime.now()
                 self.elapsedTime = Int((endTime.uptimeNanoseconds - startTime.uptimeNanoseconds) / 1000)
-                usleep(1)
+                usleep(2)
             }
         }
     }
-    
-    
+
     @objc func clock() {
         guard vic != nil else { return }
         if mos6502.cycles == 0 {
             mos6502.execute()
             vic?.clock()
         }
-        if(cia1.clock()) == true {
+        if(cia1.clock()) == .irq {
             mos6502.INT = true
         }
         _ = cia2.clock()
-        keyboard?.clock()
+        if(keyboard?.clock()) == .nmi {
+            mos6502.NMI = true
+        }
         mos6502.cycles -= 1
 //        clockTimer?.invalidate()
 //        clockTimer = nil
@@ -194,8 +202,93 @@ class C64: ObservableObject {
         }
     }
     
+    func loadFile(_ fileName: String, device: Int, address: Int, verify: Bool, normal: Bool)->Int {
+        print("Filename: \(fileName)")
+        print("device: \(device)")
+        print(String(format: "address: 0x%04X", address))
+        print("verify: \(verify)")
+        print("normal: \(normal)")
+        if fileName == "$" {
+            let dir = loadDirectory()
+            for (index, byte) in dir.enumerated() {
+                memory[address + index] = Byte(byte)
+            }
+            return address + dir.count
+        }
+        do {
+            let directory = URL.documentsDirectory
+            let fileURL = directory.appendingPathComponent(fileName)
+            var data = try Data(contentsOf: fileURL)
+            var startAddress = address
+            if normal {
+                // Startadresse extrahieren und verwenden falls normal
+                startAddress = Int(Word(data[1]) << 8 | Word(data[0]))
+            }
+            data.removeSubrange(0..<2) // Adresse aus den Daten entfernen
+            for (index, byte) in data.enumerated() {
+                memory[startAddress + index] = Byte(byte)
+            }
+            return address + data.count
+        } catch { let error = error
+            print(error.localizedDescription)
+            return -1
+        }
+        func loadDirectory()->[Byte] {
+            var files = [String]()
+            do {
+                let directory = URL.documentsDirectory
+                let items = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil, options: [])
+                files = items.map { $0.lastPathComponent }
+                print(files)
+            } catch { let error = error
+                print(error.localizedDescription)
+            }
+            var directoryData = [Byte]()
+            files.insert("HOLGER", at: 0)
+            var nextAddress = address
+            for file in files {
+                nextAddress += 4 + file.count + 2 + 1 // 4 = 2 Byte nächse Adresse und 2 Byte Zeilennummer, 2 für Quotas, 1 für 0 am Ende
+                directoryData.append(Byte(nextAddress & 0xff))
+                directoryData.append(Byte(nextAddress >> 8))
+                directoryData.append(0x0)
+                directoryData.append(0x0) //2 Byte Zeilennummer
+                directoryData.append("\"".utf8.first!)
+                directoryData.append(contentsOf: file.utf8)
+                directoryData.append("\"".utf8.first!)
+                directoryData.append(0x0)
+            }
+            directoryData.append(0x0)
+            directoryData.append(0x0)
+            return directoryData
+        }
+    }
+    
+    func saveFile(_ fileName: String, device: Int, startAddress: Int, endAddress: Int)->FileError {
+        print("Filename: \(fileName)")
+        print("device: \(device)")
+        print(String(format: "startAddress: 0x%04X", startAddress))
+        print(String(format: "endAddress: 0x%04X", endAddress))
+        do {
+            let directory = URL.documentsDirectory
+            let fileURL = directory.appendingPathComponent(fileName)
+            // Startadresse als Header an den Anfang des Arrays schreiben
+            var dataToWrite = Array(memory[startAddress..<endAddress])
+            dataToWrite.insert(Byte(startAddress >> 8), at: 0)
+            dataToWrite.insert(Byte(startAddress & 0xFF), at: 0)
+            try Data(dataToWrite).write(to: fileURL)
+        } catch { let error = error
+            print(error.localizedDescription)
+            return .fileNotFound
+        }
+        return .none
+    }
+    
+    enum FileError: Int {
+        case fileNotFound
+        case none
+    }
+    
     func pokeMachineProgram() {
-        
         poke(0x1000, [LDA_IM, 0x07, STA_AB, 0x11, 0xD0, BRK])
         func poke(_ address: Int, _ bytes: [Byte]) {
             for i in 0..<bytes.count {

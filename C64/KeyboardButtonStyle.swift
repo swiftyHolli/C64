@@ -133,7 +133,7 @@ struct ShiftLockButton: View {
     @ObservedObject var keyboard: Keyboard
     var body: some View {
         Button {
-            keyboard.keyPressed(10)
+            keyboard.keyPressed(200)
         } label: {
             Image(systemName: "capslock")
                 .font(.system(size: 14))
@@ -155,7 +155,7 @@ struct ComodoreButton: View {
                 .font(.system(size: 14))
                 .foregroundStyle(.white)
                 .padding(4.5)
-                .background(keyboard.shiftLock ? Color.blue : Color.gray)
+                .background(keyboard.comodore ? Color.blue : Color.gray)
                 .cornerRadius(3)
         }
     }
