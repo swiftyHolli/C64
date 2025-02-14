@@ -1067,7 +1067,6 @@ class MOS6502 {
         N = tmp & 0x80 > 0
         Z = tmp & 0xFF == 0
         V = (Word(A) ^ tmp) & 0x80 > 0 && (Word(A) ^ op) & 0x80 > 0
-        
         if (D)
         {
             if ((A & 0x0F) - (C ? 0 : 1)) < (op & 0x0F) { tmp -= 6 }
@@ -1090,31 +1089,51 @@ class MOS6502 {
     
     private func kernalOverrides() {
         switch PC {
-            case 0xF4B8:
+        case 0xF4C8:
             load()
-            case 0xF5DD:
+        case 0xF605:
+            let device = Int(c64.memory[0xBA])
+            if device != 8 {
+                return
+            }
+            c64.kernalROM[0x1606] = 0x8F
+            c64.kernalROM[0x1607] = 0xF6
+            return
+        case 0xF608:
+            c64.kernalROM[0x1606] = 0xD5
+            c64.kernalROM[0x1607] = 0xF3
             save()
+            return
         default:
             break
         }
         return
         func load() {
+            let device = Int(c64.memory[0xBA])
+            if device != 8 {
+                return
+            }
             let address = Int(Word(c64.memory[0xC4]) << 8 | Word(c64.memory[0xC3]))
             let verify = A > 0
-            let device = Int(c64.memory[0xBA])
-            let normal = c64.memory[0xB9] != 0x00
-            let endAddress = c64.loadFile(filename(), device: device, address: address, verify: verify, normal: normal)
-            c64.memory[0xAE] = Byte(endAddress & 0xFF)
-            c64.memory[0xAF] = Byte(endAddress >> 8)
-            PC = 0xF5A9
+            let secAddress = c64.memory[0xB9]
+            if let endAddress = c64.loadFile(filename(), startAddress: address, verify: verify, secAddress: secAddress) {
+                c64.memory[0xAE] = Byte(endAddress & 0xFF)
+                c64.memory[0xAF] = Byte(endAddress >> 8)
+                PC = 0xF5A9
+                return
+            }
+            C = true //Error flag
+            PC = 0xF5AA
         }
+        
         func save() {
-            let endAddress = Int(Word(Y) << 8 | Word(X))
-            let lowByte = Word(c64.memory[Int(A)])
-            let highByte = Word(c64.memory[Int(A + 1)])
-            let startAddress = Int(lowByte | highByte << 8)
             let device = Int(c64.memory[0xBA])
-            let error = c64.saveFile(filename(), device: device, startAddress: startAddress, endAddress: endAddress)
+            if device != 8 {
+                return
+            }
+            let endAddress = Int(Word(c64.memory[0xAF]) << 8 | Word(c64.memory[0xAE]))
+            let startAddress = Int(Word(c64.memory[0xC2]) << 8 | Word(c64.memory[0xC1]))
+            c64.saveFile(filename(), device: device, startAddress: startAddress, endAddress: endAddress)
             PC = 0xF68D
         }
         func filename()->String{

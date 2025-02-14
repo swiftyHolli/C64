@@ -161,7 +161,7 @@ struct CIA {
 
     mutating func clock()->C64.Interrupts {
         handleTimerA()
-        //handleTimerB()
+        handleTimerB()
         if (registers.values[Registers.ICR] & 0b1000_0000 > 0) {
             return .irq
         }
@@ -183,6 +183,24 @@ struct CIA {
         }
         func interruptTimerA() {
             registers.values[Registers.ICR] |= 0b0000_0001
+            registers.values[Registers.ICR] |= 0b1000_0000
+        }
+    }
+    mutating private func handleTimerB() {
+        if(registers.values[Registers.CRB] & 0b0000_0001 > 0) {
+            // Timer started
+            if timerB > 0 { timerB -= 1 }
+            if(timerB == 0) {
+                if(registers.values[Registers.CRB] & 0b0000_1000 == 0) {
+                    timerB = latchB
+                    if(interruptMask.underflowTimerB) {
+                        interruptTimerB()
+                    }
+                }
+            }
+        }
+        func interruptTimerB() {
+            registers.values[Registers.ICR] |= 0b0000_0010
             registers.values[Registers.ICR] |= 0b1000_0000
         }
     }

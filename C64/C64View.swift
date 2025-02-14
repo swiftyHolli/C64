@@ -10,17 +10,21 @@ import SwiftUI
 struct C64View: View {
     @ObservedObject var c64 = C64.shared
     var body: some View {
-        VStack {
-            TVScreen()
-                .frame(width: 320, height: 200)
-                .padding()
-            KeyboardView(keyboard: Keyboard())
-            Button("Poke") {
-                c64.pokeMachineProgram()
+        NavigationStack {
+            VStack {
+                TVScreen()
+                    .frame(width: 320, height: 200)
+                    .padding()
+                KeyboardView(keyboard: Keyboard())
+                Button("Poke") {
+                    c64.pokeMachineProgram()
+                }
+                NavigationLink(destination: Floppy1541View()) {
+                    Text("Disks")
+                }
             }
-            
+            Spacer()
         }
-        Spacer()
     }
 }
 

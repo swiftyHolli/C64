@@ -26,6 +26,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Todos,
 			);
 			target = 309636D42D5357F9004AD07D /* C64 */;
 		};
