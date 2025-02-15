@@ -46,8 +46,24 @@ class Floppy1541: ObservableObject {
         disks.append(disk)
     }
     
-    func insertDisk(_ disk: Disk?) {
-        if let index = disks.firstIndex(where: { $0.id == disk?.id }) {
+    func addD64Image() {
+        var d64Manager = D64Format()
+        let diskName = d64Manager.diskName()
+        var disk = Disk(label: diskName.isEmpty ? "UNLABELED" : diskName)
+        for file in d64Manager.fileEntries {
+            d64Manager.loadFile(file.id)
+            disk.files.append(File(name: file.fileName, type: file.type, data: Data(d64Manager.fileContent)))
+        }
+        disks.append(disk)
+    }
+
+    func insertDisk(_ disk: UUID) {
+        if let index = disks.firstIndex(where: { $0.id == disk }) {
+            disks.indices.forEach { index in
+                if disks[index].isInserted {
+                    disks[index].isInserted = false
+                }
+            }
             disks[index].isInserted = true
         }
     }
@@ -121,8 +137,5 @@ class Floppy1541: ObservableObject {
         data.append(contentsOf: "BLOCKS FREE.".utf8)
         data.append(contentsOf: [0 ,0, 0])
         return data
-    }
-        
-        
-    
+    }   
 }

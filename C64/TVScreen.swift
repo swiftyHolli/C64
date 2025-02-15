@@ -14,7 +14,7 @@ struct TVScreen: View {
         VStack {
             DrawViewUIViewRepresentable(pixels: $vic.canvasBuffer)
                 .frame(width: 320, height: 200)
-            Text("Time: \(vic.c64.elapsedTime)")
+            // Text("Time: \(vic.c64.elapsedTime)")
 
         }
     }

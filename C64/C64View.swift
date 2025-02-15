@@ -13,18 +13,23 @@ struct C64View: View {
         NavigationStack {
             VStack {
                 TVScreen()
-                    .frame(width: 320, height: 200)
-                    .padding()
+                    //.frame(width: 320, height: 200)
+                    .padding(.vertical, 30.0)
+                HStack {
+                    NavigationLink(destination: Floppy1541View()) {
+                        Text("💾")
+                            .font(.system(size: 55))
+                    }
+                }
+                Spacer()
                 KeyboardView(keyboard: Keyboard())
-                Button("Poke") {
-                    c64.pokeMachineProgram()
-                }
-                NavigationLink(destination: Floppy1541View()) {
-                    Text("Disks")
-                }
             }
             Spacer()
         }
     }
+}
+
+#Preview {
+    C64View(c64: C64.shared)
 }
 
