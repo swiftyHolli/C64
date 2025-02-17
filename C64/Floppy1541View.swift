@@ -10,7 +10,7 @@ import SwiftUI
 struct Floppy1541View: View {
     @ObservedObject var floppy1541 = Floppy1541()
     @State var selectedDisk: Floppy1541.Disk.ID?
-    
+ 
     var body: some View {
         NavigationStack {
             VStack {
@@ -22,16 +22,27 @@ struct Floppy1541View: View {
                         floppy1541.insertDisk(selectedDisk!)
                     }
                     Button("D64") {
-                        floppy1541.addD64Image()
+                        Task {
+                            await floppy1541.addD64Image()
+                        }
                     }
                 }
-                List(floppy1541.disks, id: \.id, selection: $selectedDisk) { disk in
-                    HStack  {
-                        Text(disk.label)
-                        Text(disk.isInserted ? "Ja" : "Nein")
-                        Text("Files: \(disk.files.count)")
+                List(selection: $selectedDisk) {
+                    ForEach(floppy1541.disks, id: \.id) { disk in
+                        HStack  {
+                            Text(disk.label)
+                            Text(disk.isInserted ? "Ja" : "Nein")
+                            Text("Files: \(disk.files.count)")
+                        }
+                    }
+                    .onDelete { rows in
+                        for row in rows {
+                            floppy1541.disks.remove(at: row)
+                        }
+                        floppy1541.saveDisks()
                     }
                 }
+                
                 List(floppy1541.disks.first(where: { $0.id == selectedDisk})?.files ?? [], id: \.self) {file in
                     HStack {
                         Text(file.name)

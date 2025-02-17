@@ -6,13 +6,7 @@
 //
 import Foundation
 
-class D64ViewModel: ObservableObject {
-    @Published var d64Format = D64Format()
-    var c64 = C64.shared
-
-}
-
-struct D64Format {
+class D64Format: ObservableObject {
     var d64Disk = [Byte]()
     
     struct FileEntry: Hashable, Identifiable {
@@ -34,12 +28,7 @@ struct D64Format {
     
     var fileEntries: [FileEntry] = []
     var fileContent: [UInt8] = []
-        
-    init() {
-        try! readD64File("ELEKTROMAT")
-        loadFileEntries()
-    }
-    
+            
     func diskName() -> String {
         var diskName = ""
         for index in 144..<161 {
@@ -48,7 +37,7 @@ struct D64Format {
         return diskName
     }
     
-    mutating func loadFile(_ id: UUID?) {
+    func loadFile(_ id: UUID?) {
         guard let fileEntry = self.fileEntries.first(where: { $0.id == id }) else { return }
         fileContent.removeAll()
         var nextTrack = fileEntry.firstDataBlock.track
@@ -64,14 +53,12 @@ struct D64Format {
                 pointer += 1
             }
             if nextTrack == 0 {
-                let hexes = fileContent.map { String(format: "%02X", $0) }
-                print(hexes.joined(separator: ":"))
                 break
             }
         }
     }
     
-    mutating func loadFileEntries() {
+    func loadFileEntries() {
         var nextTrack = 18
         var nextBlock = 1
         while true {
@@ -137,16 +124,21 @@ struct D64Format {
         }
     }
     
-    mutating func readD64File(_ fileName: String) throws {
-        if let filePath = Bundle.main.path(forResource: fileName, ofType: "D64"){
-            if let romData = try? Data(contentsOf: URL(filePath: filePath)) {
-                for index in 0..<romData.count {
-                    d64Disk.append(romData[index])
-                }
+    func readD64File() async {
+        do {
+            let url = URL(string: "https://csdb.dk/release/download.php?id=47600")
+            let (romData, _) = try await URLSession.shared.data(from: url!)
+            for index in 0..<romData.count {
+                //TODO: check romData for D64 format
+                self.d64Disk.append(romData[index])
             }
+            self.loadFileEntries()
+        }
+        catch { let error = error
+            print(error.localizedDescription)
         }
     }
-    
+
     private func blockAddress(track: Int, block: Int) -> Int {
         let trackOffsets: [Int] = [0, 0x1500, 0x2A00, 0x3F00, 0x5400, 0x6900, 0x7E00, 0x9300, 0xA800, 0xBD00, 0xD200, 0xE700, 0xFC00, 0x11100, 0x12600, 0x13B00, 0x15000, 0x16500, 0x17800, 0x18B00, 0x19E00, 0x1B100, 0x1C400, 0x1D700, 0x1EA00, 0x1FC00, 0x20E00, 0x22000, 0x23200, 0x24400, 0x25600, 0x26700, 0x27800, 0x28900, 0x29A00, 0x2AB00, 0x2BC00, 0x2CD00, 0x2DE00, 0x2EF00]
         

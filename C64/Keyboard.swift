@@ -27,7 +27,7 @@ class Keyboard: ObservableObject {
         case control  = 58
         case commodore = 61
         case shiftLock = 200 // mechanically locked key; parallel connected to the left shift key
-        case resore = 201 //restore button performes an NMI
+        case restore = 201 //restore button performes an NMI
     }
         
     init() {
@@ -35,7 +35,7 @@ class Keyboard: ObservableObject {
     }
     
     func clock()->C64.Interrupts {
-        if controlKey == .resore {
+        if controlKey == .restore {
             controlKey = .none
             return .nmi
         }
@@ -71,39 +71,40 @@ class Keyboard: ObservableObject {
     }
     
     func keyPressed(_ key: Int) {
-        if key == ControlKey.resore.rawValue {
-            controlKey = .resore
+        if key == ControlKey.restore.rawValue {
+            controlKey = .restore
         }
         if shiftLock {
             controlKey = .lShift
         }
         if key == ControlKey.lShift.rawValue {
-            controlKey = .lShift
             shift.toggle()
+            controlKey = shift ? .lShift : .none
             return
         }
         if key == ControlKey.rShift.rawValue {
-            controlKey = .rShift
             shift.toggle()
+            controlKey = shift ? .rShift : .none
             return
         }
         if key == ControlKey.commodore.rawValue {
-            controlKey = .commodore
             comodore.toggle()
+            controlKey = comodore ? .commodore : .none
             return
         }
         if key == ControlKey.control.rawValue {
-            controlKey = .control
             control.toggle()
-            return
+            controlKey = control ? .control : .none
+           return
         }
         if key == ControlKey.shiftLock.rawValue {
-            controlKey = .lShift
             shiftLock.toggle()
+            controlKey = shiftLock ? .lShift : .none
+            shift = shiftLock
             return
         }
         if keyPressedBuffer == -1 {
-            shift = false
+            if !shiftLock { shift = false }
             control = false
             comodore = false
             keyPressedBuffer = key

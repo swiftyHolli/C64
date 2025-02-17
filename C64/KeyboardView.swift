@@ -14,8 +14,9 @@ struct KeyboardView: View {
         VStack(spacing: 1) {
             HStack(spacing: 1) {
                 KeyboardButton(vm: keyboard, "Home", "Clear", "Clear", " ",0 , 0, code: 51)
-                KeyboardButton(vm: keyboard, "Del", "Ins", "Ins", " ",0 , 0, code: 00)
+                Spacer()
                 KeyboardButton(vm: keyboard, "Restore", "Restore", "Restore", " ",0 , 0, code: 201)
+                KeyboardButton(vm: keyboard, "Del", "Ins", "Ins", " ",0 , 0, code: 00)
             }
             HStack(spacing: 1){
                 KeyboardButton(vm: keyboard, "←", "←", "←", " ",0 , 0, code: 57)
@@ -92,6 +93,7 @@ struct KeyboardView: View {
             .fixedSize(horizontal: false, vertical: true)
         }
         .buttonStyle(KeyboardButtonStyle())
+        .padding()
     }
 }
 

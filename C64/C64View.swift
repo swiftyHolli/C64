@@ -22,6 +22,7 @@ struct C64View: View {
                     }
                 }
                 Spacer()
+                NavigationLink("Disassembler", destination: DisassemblerView())
                 KeyboardView(keyboard: Keyboard())
             }
             Spacer()

@@ -46,17 +46,20 @@ class Floppy1541: ObservableObject {
         disks.append(disk)
     }
     
-    func addD64Image() {
-        var d64Manager = D64Format()
-        let diskName = d64Manager.diskName()
-        var disk = Disk(label: diskName.isEmpty ? "UNLABELED" : diskName)
-        for file in d64Manager.fileEntries {
-            d64Manager.loadFile(file.id)
-            disk.files.append(File(name: file.fileName, type: file.type, data: Data(d64Manager.fileContent)))
+    func addD64Image() async {
+        let d64Manager = D64Format()
+        await d64Manager.readD64File()
+        await MainActor.run {
+            let diskName = d64Manager.diskName()
+            var disk = Disk(label: diskName.isEmpty ? "UNLABELED" : diskName)
+            for file in d64Manager.fileEntries {
+                d64Manager.loadFile(file.id)
+                disk.files.append(File(name: file.fileName, type: file.type, data: Data(d64Manager.fileContent)))
+            }
+            self.disks.append(disk)
         }
-        disks.append(disk)
     }
-
+    
     func insertDisk(_ disk: UUID) {
         if let index = disks.firstIndex(where: { $0.id == disk }) {
             disks.indices.forEach { index in
@@ -92,7 +95,12 @@ class Floppy1541: ObservableObject {
             data = buildDirectoryBasicList(for: disk)
         }
         else {
-            data = disk.files.first(where: { $0.name == fileName })?.data
+            if fileName == "*" {
+                data = disk.files.first?.data
+            }
+            else {
+                data = disk.files.first(where: { $0.name == fileName })?.data
+            }
         }
         if data == nil {return nil}
         if data!.count < 2 {return nil}
@@ -121,11 +129,13 @@ class Floppy1541: ObservableObject {
         data.append(0x0)
         for file in files {
             let fileName = ("\"" + file.name + "\"").padding(toLength: 18, withPad: " ", startingAt: 0)
+            let blockCount: UInt16 = UInt16(file.data.count / 254)
             nextAddress += 4 + 3 + fileName.count + 3 + 1 // 4 = 2 Byte nächse Adresse und 2 Byte Zeilennummer, 3 Leerzeichen, 4 für Typ, 1 für 0 am Ende
             data.append(Byte(nextAddress & 0xff))
             data.append(Byte(nextAddress >> 8))
-            // TODO: 2 Byte Zeilennummer durch Anzahl der Blöcke ersetzen
-            data.append(contentsOf: [0, 0, 32, 32, 32])
+            data.append(Byte(blockCount & 0xff))
+            data.append(Byte(blockCount >> 8))
+            data.append(contentsOf: [32, 32, 32])
             data.append(contentsOf: fileName.utf8)
             data.append(contentsOf: file.type.utf8)
             data.append(0x0)

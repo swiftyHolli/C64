@@ -146,8 +146,8 @@ class VICII: ObservableObject {
             registers.MXYE = byte
         case 24:
             registers.MEMP = byte
-            screenMemoryAddress = Int((byte & 0b1111_0000) >> 4) * 1024
-            characterMemoryAddress = Int((byte & 0b0000_1110) >> 1) * 2048 - 4096
+            screenMemoryAddress = Int((byte & 0b1111_0000) >> 4) * 1024 // + Startadresse der aktuellen VIC Bank
+            characterMemoryAddress = Int((byte & 0b0000_1110) >> 1) * 2048
         case 25:
             registers.INTR = byte
         case 26:
@@ -304,7 +304,26 @@ class VICII: ObservableObject {
         }
     }
 
-        
+    func readCharacterSetByte(_ vicAddress: Int) -> UInt8 {
+        let memoryBankSelect = Word(~c64.cia2.getPortA() & 0b11)
+        let memoryBankStartAddress = Int(memoryBankSelect * 0x4000)
+        let address = characterMemoryAddress + memoryBankStartAddress + vicAddress
+        if ((address >= 0x1000 && address < 0x2000) || (address >= 0x9000 && address < 0xa000)) {
+            return c64.characterRom[vicAddress]
+        }
+        return c64.memory[address]
+    }
+    
+    func readScreenMemoryByte(_ vicAddress: Int) -> UInt8 {
+        let memoryBankSelect = Word(~c64.cia2.getPortA() & 0b11)
+        let memoryBankStartAddress = Int(memoryBankSelect * 0x4000)
+        let address = screenMemoryAddress + memoryBankStartAddress + vicAddress
+        if ((address >= 0x1000 && address < 0x2000) || (address >= 0x9000 && address < 0xa000)) {
+            return c64.characterRom[vicAddress]
+        }
+        return c64.memory[address]
+    }
+
     func clock() {
         cyclCounter += 1
         if(cyclCounter > 62) {
@@ -332,10 +351,10 @@ class VICII: ObservableObject {
         if characterLine < 0 { characterLine = 24 }
         if characterLine > 24 { characterLine = 0 }
         for characterIndex in 0..<40 {
-            let character = c64.memory[(screenMemoryAddress + characterIndex + characterLine * 40)]
+            let character = readScreenMemoryByte(characterIndex + characterLine * 40)
             colorLineBuffer[characterIndex] = c64.memory[(colorMemoryAddress + characterIndex + characterLine * 40)]
             for i in 0..<8 {
-                characterLineBuffer[characterIndex * 8 + i] = c64.characterRom[characterMemoryAddress + Int(character) * 8 + i]
+                characterLineBuffer[characterIndex * 8 + i] = readCharacterSetByte(Int(character) * 8 + i)
             }
         }
     }

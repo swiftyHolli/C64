@@ -14,7 +14,7 @@ class MOS6502 {
     var c64: C64!
     
     var PC: Word        //Program counter
-    
+    var oldPC: Word = 0
     var SP: Byte         //Stack Pointer
     
     var OP: Word        //Operand Pointer
@@ -121,13 +121,13 @@ class MOS6502 {
         if INT { INThandler() }
         if NMI { NMIhandler() }
         
-        if PC == 0xf49e
+        if PC == 0xf1b5
         {
             stop += 1
         }
         
         kernalOverrides()
-        
+        oldPC = PC
         let instruction = fetchByteImmediatePC() // one cycle
         switch instruction {
             // MARK: - Control Operations
@@ -135,7 +135,7 @@ class MOS6502 {
             cycles -= 1
             return
         case BRK:
-            PC += 2
+            PC += 1
             c64.memory[Int(SP) + 0x100] = Byte(PC>>8 & 0xFF)
             SP -= 1
             c64.memory[Int(SP) + 0x100] = Byte(PC & 0xFF)
@@ -1103,6 +1103,13 @@ class MOS6502 {
             c64.kernalROM[0x1606] = 0xD5
             c64.kernalROM[0x1607] = 0xF3
             save()
+            return
+        case 0xF3E1: //IEC-Bus Open
+            c64.memory[0x90] = 0x00 //serial status = OK
+            PC = 0xf3ed
+            return
+        case 0xF237: //Eingabe vom IEC-Bus
+            PC = 0xF235
             return
         default:
             break
