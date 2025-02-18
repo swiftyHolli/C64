@@ -13,6 +13,10 @@ class DisassemblerViewModel: ObservableObject {
     @Published var startAddressString = ""
     @Published var endAddressString = ""
     
+    init() {
+        c64.setStopMarker = setStopMarker
+    }
+    
     private var startAddress: Int {
         Int(startAddressString, radix: 16) ?? 0
     }
@@ -20,19 +24,78 @@ class DisassemblerViewModel: ObservableObject {
     private var endAddress: Int {
         Int(endAddressString, radix: 16) ?? 0
     }
-        
+    
+    private var breakpoints = [Int]() {
+        didSet {
+            c64.breakpoints = breakpoints
+        }
+    }
+    
     var disassemblyText: [Disassembler.Line] {
         return disassembler.disassembly
     }
     
+    func makeStep() {
+        c64.makeStep = true
+    }
+    
+    func resetHalt() {
+        c64.HALT = false
+    }
+    
+    func dataString(_ lineID : UUID)->String {
+        var _data: String = ""
+        if let line = disassembler.disassembly.first(where: { $0.id == lineID }) {
+            if line.dataView == .ascii {
+                _data = String(bytes: line.data, encoding: .ascii) ?? ""
+            }
+            else {
+                for entry in line.data {
+                    _data.append(String(format: "%02X ", entry))
+                }
+            }
+        }
+        return _data
+    }
+
+    
     func disassemble() {
         disassembler.disassemble(c64.memory, start: startAddress, end: endAddress)
+        breakpoints.removeAll()
     }
     
     func changeToData(_ lines: Set<UUID>) {
         disassembler.changeToData(lines)
     }
     
+    func changeDataView(_ line: UUID) {
+        disassembler.changeDataView(line)
+    }
+    
+    func addRemoveBreakpoint(_ line: UUID) {
+        if let lineIndex = disassembler.disassembly.firstIndex(where: { $0.id == line }) {
+            let address = disassembler.disassembly[lineIndex].address
+            if breakpoints.contains(address) {
+                if let index = breakpoints.firstIndex(of: address) {
+                    breakpoints.remove(at: index)
+                    disassembler.disassembly[lineIndex].isBreakpoint = false
+                }
+            }
+            else {
+                breakpoints.append(address)
+                disassembler.disassembly[lineIndex].isBreakpoint = true
+            }
+        }
+    }
+    
+    func setStopMarker(at address: Int, old: Int)->Void {
+        for lineIndex in 0..<disassembler.disassembly.count {
+            self.disassembler.disassembly[lineIndex].stepMarker = false
+        }
+        if let lineIndex = disassembler.disassembly.firstIndex(where: { $0.address == address }) {
+                self.disassembler.disassembly[lineIndex].stepMarker = true
+        }
+    }
 }
 
 struct Disassembler {
@@ -45,20 +108,18 @@ struct Disassembler {
         var instruction: String = ""
         var operand: String = ""
         var data: [UInt8] = []
-        var type: Type = .instruction
-        var dataString: String {
-            var _data: String = ""
-            for entry in self.data {
-                _data.append(String(format: "%02X ", entry))
-            }
-            return _data
-        }
-        enum `Type` { case instruction, data }
+        var type: LineType = .instruction
+        var isBreakpoint = false
+        var dataView: DataView = .hex
+        var stepMarker = false
+        enum LineType { case instruction, data }
+        enum DataView { case ascii, hex }
     }
         
     var disassembly: [Line] = []
     
     mutating func disassemble(_ codes: [Byte], start: Int, end: Int) {
+        if end <= start {return}
         disassembly.removeAll(keepingCapacity: true)
         var address: Int = start
         for _ in start..<end {
@@ -99,6 +160,7 @@ struct Disassembler {
                 disassembly.operand = operand(.immediate)
             case 0x0A:
                 disassembly.instruction = "ASL"
+                incAddress()
             case 0x0D:
                 disassembly.instruction = "ORA "
                 incAddress()
@@ -426,6 +488,10 @@ struct Disassembler {
                 disassembly.instruction = "LDX "
                 incAddress()
                 disassembly.operand = operand(.immediate)
+            case 0xA3:
+                disassembly.instruction = "LAX "
+                incAddress()
+                disassembly.operand = operand(.zeroPageXIndirect)
             case 0xA4:
                 disassembly.instruction = "LDY "
                 incAddress()
@@ -438,6 +504,10 @@ struct Disassembler {
                 disassembly.instruction = "LDX "
                 incAddress()
                 disassembly.operand = operand(.zeroPage)
+            case 0xA7:
+                disassembly.instruction = "LAX " // undocumented
+                incAddress()
+                disassembly.operand = operand(.zeroPage)
             case 0xA8:
                 disassembly.instruction = "TAY"
                 incAddress()
@@ -448,6 +518,10 @@ struct Disassembler {
             case 0xAA:
                 disassembly.instruction = "TAX"
                 incAddress()
+            case 0xAB:
+                disassembly.instruction = "LAX " // undocumented
+                incAddress()
+                disassembly.operand = operand(.immediate)
             case 0xAC:
                 disassembly.instruction = "LDY "
                 incAddress()
@@ -460,12 +534,20 @@ struct Disassembler {
                 disassembly.instruction = "LDX "
                 incAddress()
                 disassembly.operand = operand(.absolute)
+            case 0xAF:
+                disassembly.instruction = "LAX "  //undocumented
+                incAddress()
+                disassembly.operand = operand(.absolute)
             case 0xB0:
                 disassembly.instruction = "BCS "
                 incAddress()
                 disassembly.operand = operand(.relative)
             case 0xB1:
-                disassembly.instruction = "ADC "
+                disassembly.instruction = "LDA "
+                incAddress()
+                disassembly.operand = operand(.zeroPageIndirectY)
+            case 0xB3:
+                disassembly.instruction = "LAX " // undocumented
                 incAddress()
                 disassembly.operand = operand(.zeroPageIndirectY)
             case 0xB4:
@@ -473,11 +555,15 @@ struct Disassembler {
                 incAddress()
                 disassembly.operand = operand(.zeroPageXIndirect)
             case 0xB5:
-                disassembly.instruction = "ADC "
+                disassembly.instruction = "LDA "
                 incAddress()
                 disassembly.operand = operand(.zeroPageXIndirect)
             case 0xB6:
                 disassembly.instruction = "LDX "
+                incAddress()
+                disassembly.operand = operand(.zeroPageIndirectY)
+            case 0xB7:
+                disassembly.instruction = "LAX " // undocumented
                 incAddress()
                 disassembly.operand = operand(.zeroPageIndirectY)
             case 0xB8:
@@ -502,6 +588,10 @@ struct Disassembler {
                 disassembly.instruction = "LDX "
                 incAddress()
                 disassembly.operand = operand(.absoluteX)
+            case 0xBF:
+                disassembly.instruction = "LAX " // undocumented
+                incAddress()
+                disassembly.operand = operand(.absoluteY)
             case 0xC0:
                 disassembly.instruction = "CPY "
                 incAddress()
@@ -566,7 +656,7 @@ struct Disassembler {
             case 0xD9:
                 disassembly.instruction = "CMP "
                 incAddress()
-                disassembly.operand = operand(.zeroPageIndirectY)
+                disassembly.operand = operand(.absoluteY)
             case 0xDD:
                 disassembly.instruction = "CMP "
                 incAddress()
@@ -741,11 +831,24 @@ struct Disassembler {
             if let index = self.disassembly.firstIndex(of: selectedLine) {
                 indizies.append(index)
             }
-            print(indizies)
         }
         for _ in 0..<indizies.count {
             self.disassembly.remove(at: indizies[0])
         }
         
     }
+    
+    mutating func changeDataView(_ line: UUID) {
+        if let lineIndex = self.disassembly.firstIndex(where: { $0.id == line }) {
+            if self.disassembly[lineIndex].type == .data {
+                if self.disassembly[lineIndex].dataView == .hex {
+                    self.disassembly[lineIndex].dataView = .ascii
+                }
+                else {
+                    self.disassembly[lineIndex].dataView = .hex
+                }
+            }
+        }
+    }
+
 }

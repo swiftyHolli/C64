@@ -74,6 +74,7 @@ class Floppy1541: ObservableObject {
     @Published var disks: [Disk] = []
     
     func writeFile(_ fileName: String, startAddress: Int, endAddress: Int) {
+        let fileName = realFilename(fileName)
         guard let diskIndex = disks.firstIndex(where: {$0.isInserted == true}) else {return}
         var dataToWrite = Array(c64.memory[startAddress..<endAddress])
         dataToWrite.insert(Byte(startAddress >> 8), at: 0)
@@ -88,6 +89,7 @@ class Floppy1541: ObservableObject {
     }
     
     func readFile(_ fileName: String, stardAddress: Int, secAddress: Byte) -> Int? {
+        let fileName = realFilename(fileName)
         guard let disk = disks.first(where: {$0.isInserted == true}) else {return nil}
         var data: Data?
         var startAddress = stardAddress
@@ -112,6 +114,17 @@ class Floppy1541: ObservableObject {
             c64.memory[startAddress + index] = Byte(byte)
         }
         return startAddress + data!.count
+        
+    }
+    
+    private func realFilename(_ name: String) -> String {
+        var fileName = name
+        let prefix = String(name.prefix(2))
+        if prefix == "0:" || prefix == "1:" {
+            fileName = String(name.split(separator: ":").last!)
+        }
+        print(fileName)
+        return fileName
     }
     
     private func buildDirectoryBasicList(for disk: Disk) -> Data? {

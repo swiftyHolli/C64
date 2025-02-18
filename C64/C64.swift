@@ -23,6 +23,12 @@ class C64: ObservableObject {
     var keyboard: Keyboard?
     var floppy1541: Floppy1541?
     
+    var breakpoints = [Int]()
+    var makeStep = false
+    var HALT = false
+    var setStopMarker: ((Int, Int)->Void)?
+    var oldPC = 0
+    
     struct C64Adresses {
         static let CharacterROM = (start: Word(0xD000), end: Word(0xDFFF))
         static let BasicRom = (start: Word(0xA000), end: Word(0xBFFF))
@@ -111,6 +117,25 @@ class C64: ObservableObject {
     @objc func clock() {
         guard vic != nil else { return }
         if mos6502.cycles == 0 {
+            if breakpoints.contains(Int(mos6502.PC)){
+                if !HALT {
+                    DispatchQueue.main.async {
+                        self.setStopMarker!(Int(self.mos6502.PC), self.oldPC)
+                    }
+                }
+                HALT = true
+            }
+            if HALT && !makeStep {
+                mos6502.cycles = 0
+                return
+            }
+            if makeStep {
+                DispatchQueue.main.async {
+                    self.setStopMarker!(Int(self.mos6502.PC), self.oldPC)
+                }
+            }
+            makeStep = false
+            oldPC = Int(self.mos6502.PC)
             mos6502.execute()
             vic?.clock()
         }
@@ -125,11 +150,10 @@ class C64: ObservableObject {
             mos6502.NMI = true
         }
         mos6502.cycles -= 1
-//        clockTimer?.invalidate()
-//        clockTimer = nil
-        //startTimer()
+        
     }
 
+    
     
     func readByteFromAddress(_ address: Word)->Byte {
         // Address decoding

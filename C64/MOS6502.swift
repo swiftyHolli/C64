@@ -121,7 +121,7 @@ class MOS6502 {
         if INT { INThandler() }
         if NMI { NMIhandler() }
         
-        if PC == 0xf1b5
+        if c64.breakpoints.contains(Int(PC)) || PC == 0xf1ad
         {
             stop += 1
         }
@@ -144,6 +144,7 @@ class MOS6502 {
             I = true
             c64.memory[Int(SP) + 0x100] = PStoByte()
             SP -= 1
+            B = false
             PC = fetchAddressAbsolute(address: 0xFFFE)
         case JMP_AB:
             PC = fetchAddressAbsolutePC()
