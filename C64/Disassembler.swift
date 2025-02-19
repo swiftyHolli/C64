@@ -35,6 +35,18 @@ class DisassemblerViewModel: ObservableObject {
         return disassembler.disassembly
     }
     
+    func setLabel(_ label: String, address : Int) {
+        if let lineAddress = disassembler.disassembly.firstIndex(where: { $0.address == address }) {
+            disassembler.disassembly[lineAddress].label = label
+        }
+    }
+    
+    func setComment(_ comment : String, address: Int) {
+        if let lineAddress = disassembler.disassembly.firstIndex(where: { $0.address == address }) {
+            disassembler.disassembly[lineAddress].comment = comment
+        }
+    }
+    
     func makeStep() {
         c64.makeStep = true
     }
@@ -43,9 +55,9 @@ class DisassemblerViewModel: ObservableObject {
         c64.HALT = false
     }
     
-    func dataString(_ lineID : UUID)->String {
+    func dataString(_ address: Int)->String {
         var _data: String = ""
-        if let line = disassembler.disassembly.first(where: { $0.id == lineID }) {
+        if let line = disassembler.disassembly.first(where: { $0.address == address }) {
             if line.dataView == .ascii {
                 _data = String(bytes: line.data, encoding: .ascii) ?? ""
             }
@@ -64,16 +76,16 @@ class DisassemblerViewModel: ObservableObject {
         breakpoints.removeAll()
     }
     
-    func changeToData(_ lines: Set<UUID>) {
-        disassembler.changeToData(lines)
+    func changeToData(_ addresses: Set<Int>) {
+        disassembler.changeToData(addresses)
     }
     
-    func changeDataView(_ line: UUID) {
-        disassembler.changeDataView(line)
+    func changeDataView(_ address: Int) {
+        disassembler.changeDataView(address)
     }
     
-    func addRemoveBreakpoint(_ line: UUID) {
-        if let lineIndex = disassembler.disassembly.firstIndex(where: { $0.id == line }) {
+    func addRemoveBreakpoint(_ address: Int) {
+        if let lineIndex = disassembler.disassembly.firstIndex(where: { $0.address == address }) {
             let address = disassembler.disassembly[lineIndex].address
             if breakpoints.contains(address) {
                 if let index = breakpoints.firstIndex(of: address) {
@@ -98,22 +110,23 @@ class DisassemblerViewModel: ObservableObject {
     }
 }
 
-struct Disassembler {
+struct Disassembler : Codable {
     
-    struct Line: Identifiable, Hashable {
-        var id: UUID = UUID()
+    struct Line: Identifiable, Hashable, Codable {
+        var id: Int {address}
         var address: Int = 0
         var addressString: String = ""
         var label: String = ""
         var instruction: String = ""
         var operand: String = ""
         var data: [UInt8] = []
+        var comment: String = ""
         var type: LineType = .instruction
         var isBreakpoint = false
         var dataView: DataView = .hex
         var stepMarker = false
-        enum LineType { case instruction, data }
-        enum DataView { case ascii, hex }
+        enum LineType: Codable { case instruction, data }
+        enum DataView: Codable { case ascii, hex }
     }
         
     var disassembly: [Line] = []
@@ -816,9 +829,9 @@ struct Disassembler {
         }
     }
     
-    mutating func changeToData(_ lines: Set<UUID>) {
+    mutating func changeToData(_ lines: Set<Int>) {
         var data = [UInt8]()
-        let selectedLines = self.disassembly.filter { lines.contains($0.id) }
+        let selectedLines = self.disassembly.filter { lines.contains($0.address) }
         let firstLine = selectedLines.first!
         for line in selectedLines {
             data.append(contentsOf: line.data)
@@ -838,8 +851,8 @@ struct Disassembler {
         
     }
     
-    mutating func changeDataView(_ line: UUID) {
-        if let lineIndex = self.disassembly.firstIndex(where: { $0.id == line }) {
+    mutating func changeDataView(_ address: Int) {
+        if let lineIndex = self.disassembly.firstIndex(where: { $0.address == address }) {
             if self.disassembly[lineIndex].type == .data {
                 if self.disassembly[lineIndex].dataView == .hex {
                     self.disassembly[lineIndex].dataView = .ascii
@@ -850,5 +863,21 @@ struct Disassembler {
             }
         }
     }
-
+    func save(_ url: URL) {
+        do {
+            let data = try JSONEncoder().encode(self)
+            try data.write(to: url)
+        } catch { let error = error
+            print(error)
+        }
+    }
+    
+    mutating func load(_ url: URL) {
+        do {
+            let data = try Data(contentsOf: url)
+            self = try JSONDecoder().decode(Disassembler.self, from: data)
+        } catch { let error = error
+            print(error)
+        }
+    }
 }

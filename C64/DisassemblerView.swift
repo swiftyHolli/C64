@@ -17,7 +17,9 @@ struct DisassemblerView: View {
                 .padding()
                 List(selection: $selectedLines) {
                     ForEach(disassembler.disassemblyText, id: \.id) { line in
-                        DisassemblerLineView(line: line, vm: disassembler)
+                        NavigationLink(destination: DisassemblerDetailView(vm: disassembler, line: line)) {
+                            DisassemblerLineView(line: line, vm: disassembler)
+                        }
                     }
                 }
                 .listStyle(.plain)
@@ -27,6 +29,8 @@ struct DisassemblerView: View {
                 Button("Reload") {
                     disassembler.disassemble()
                 }
+                NavigationLink("Load", destination: DisassemblerLoadFileView( disassembler: disassembler))
+                NavigationLink("Save", destination: DisassemblerSaveFileView( disassembler: disassembler))
                 Button("Data") {
                     disassembler.changeToData(selectedLines)
                     selectedLines.removeAll()
@@ -35,7 +39,6 @@ struct DisassemblerView: View {
             }
         }
         .navigationTitle("Disassambly")
-        .toolbar { EditButton() }
     }
     
     var controlView: some View {
@@ -59,27 +62,37 @@ struct DisassemblerView: View {
         let line: Disassembler.Line
         @ObservedObject var vm: DisassemblerViewModel
         var body: some View {
-            HStack {
-                Text(line.addressString)
-                    .background(line.isBreakpoint ? .red : .clear)
-                if line.type == .instruction {
-                    Text(line.instruction)
-                    Text(line.operand)
-                        .swipeActions {
-                            Button("BreakPoint") {
-                                vm.addRemoveBreakpoint(line.id)
-                            }
-                        }
-                        .tint(.red)
-                } else {
-                    Text(vm.dataString(line.id))
-                        .swipeActions {
-                            Button(line.dataView == .ascii ? "Hex" :"ASCII") {
-                                vm.changeDataView(line.id)
-                            }
-                        }
-                        .tint(.blue)
+            HStack(alignment: .top) {
+                VStack {
+                    Text(line.addressString)
+                        .background(line.isBreakpoint ? .red : .clear)
+                    Text(line.label).font(.subheadline).foregroundColor(.accentColor)
                 }
+                VStack (alignment: .leading) {
+                    HStack(alignment: .top) {
+                        if line.type == .instruction {
+                            Text(line.instruction)
+                            Text(line.operand)
+                                .swipeActions {
+                                    Button("BreakPoint") {
+                                        vm.addRemoveBreakpoint(line.id)
+                                    }
+                                }
+                                .tint(.red)
+                        } else {
+                            Text(vm.dataString(line.id))
+                                .swipeActions {
+                                    Button(line.dataView == .ascii ? "Hex" :"ASCII") {
+                                        vm.changeDataView(line.id)
+                                    }
+                                }
+                                .tint(.blue)
+                        }
+                    }
+                    Text(line.comment).font(.subheadline)
+                        .foregroundColor(.primary)
+                }
+                
             }
             .background(line.stepMarker ? .yellow : .clear)
         }
