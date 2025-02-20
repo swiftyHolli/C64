@@ -65,7 +65,17 @@ class DisassemblerViewModel: ObservableObject {
         var _data: String = ""
         if let line = disassembler.disassembly.first(where: { $0.address == address }) {
             if line.dataView == .ascii {
-                _data = String(bytes: line.data, encoding: .ascii) ?? ""
+                for byte in line.data {
+                    if byte > 32 && byte <= 126 {
+                        _data.append(String(bytes: [byte], encoding: .ascii) ?? "\u{fffd}")
+                    }
+                    else if byte == 32 {
+                        _data.append("\u{2423}")
+                    }
+                    else {
+                        _data.append("\u{fffd}")
+                    }
+                }
             }
             else {
                 for entry in line.data {
@@ -149,7 +159,6 @@ struct Disassembler : Codable {
             let instruction = codes[address]
             disassembly.append(decode(instruction))
         }
-        
         func decode(_ instruction: UInt8) -> Line {
             if address >= codes.count { return Line() }
             var disassembly: Line = Line()
@@ -825,6 +834,7 @@ struct Disassembler : Codable {
             }
             
             func hex(_ value: UInt8) -> String {
+                data.append(value)
                 incAddress()
                 return String(format: "$%02X", value)
             }
