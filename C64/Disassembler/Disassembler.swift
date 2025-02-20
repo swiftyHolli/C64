@@ -13,6 +13,8 @@ class DisassemblerViewModel: ObservableObject {
     @Published var startAddressString = ""
     @Published var endAddressString = ""
     
+    
+    
     init() {
         c64.setStopMarker = setStopMarker
     }
@@ -29,6 +31,10 @@ class DisassemblerViewModel: ObservableObject {
         didSet {
             c64.breakpoints = breakpoints
         }
+    }
+    
+    var disassamblyName: String {
+        disassembler.disassemblyName
     }
     
     var disassemblyText: [Disassembler.Line] {
@@ -76,8 +82,8 @@ class DisassemblerViewModel: ObservableObject {
         breakpoints.removeAll()
     }
     
-    func changeToData(_ addresses: Set<Int>) {
-        disassembler.changeToData(addresses)
+    func changeToData(from startDataAddress: Int, to endDataAddress: Int) {
+        disassembler.changeToData(from: startDataAddress, to: endDataAddress)
     }
     
     func changeDataView(_ address: Int) {
@@ -112,6 +118,8 @@ class DisassemblerViewModel: ObservableObject {
 
 struct Disassembler : Codable {
     
+    var disassemblyName: String = ""
+    
     struct Line: Identifiable, Hashable, Codable {
         var id: Int {address}
         var address: Int = 0
@@ -133,10 +141,11 @@ struct Disassembler : Codable {
     
     mutating func disassemble(_ codes: [Byte], start: Int, end: Int) {
         if end <= start {return}
+        disassemblyName = ""
         disassembly.removeAll(keepingCapacity: true)
         var address: Int = start
         for _ in start..<end {
-            if address >= codes.count { break }
+            if address >= codes.count || address > end { break }
             let instruction = codes[address]
             disassembly.append(decode(instruction))
         }
@@ -829,26 +838,21 @@ struct Disassembler : Codable {
         }
     }
     
-    mutating func changeToData(_ lines: Set<Int>) {
+    mutating func changeToData(from startAddress: Int, to endAddress: Int) {
         var data = [UInt8]()
-        let selectedLines = self.disassembly.filter { lines.contains($0.address) }
-        let firstLine = selectedLines.first!
-        for line in selectedLines {
-            data.append(contentsOf: line.data)
-        }
-        let index = self.disassembly.firstIndex(of: firstLine)!
-        self.disassembly[index].data = data
-        self.disassembly[index].type = .data
-        var indizies = [Int]()
-        for selectedLine in selectedLines {
-            if let index = self.disassembly.firstIndex(of: selectedLine) {
-                indizies.append(index)
+        var addresses = [Int]()
+
+        for address in startAddress...endAddress {
+            if let line = disassembly.first(where: { $0.address == address }) {
+                data.append(contentsOf: line.data)
+                addresses.append(line.address)
             }
         }
-        for _ in 0..<indizies.count {
-            self.disassembly.remove(at: indizies[0])
-        }
-        
+        let index = self.disassembly.firstIndex(where: { $0.address == startAddress })!
+        self.disassembly[index].data = data
+        self.disassembly[index].type = .data
+        addresses.removeFirst()
+        self.disassembly.removeAll(where: { addresses.contains($0.address) })
     }
     
     mutating func changeDataView(_ address: Int) {
@@ -863,8 +867,9 @@ struct Disassembler : Codable {
             }
         }
     }
-    func save(_ url: URL) {
+    mutating func save(_ url: URL) {
         do {
+            disassemblyName = url.lastPathComponent
             let data = try JSONEncoder().encode(self)
             try data.write(to: url)
         } catch { let error = error

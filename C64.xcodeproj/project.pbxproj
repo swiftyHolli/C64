@@ -6,6 +6,34 @@
 	objectVersion = 70;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		3083058C2D666B2C0046E73E /* Disassembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308305682D666B2C0046E73E /* Disassembler.swift */; };
+		3083058D2D666B2C0046E73E /* DisassemblerDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308305692D666B2C0046E73E /* DisassemblerDetailView.swift */; };
+		3083058E2D666B2C0046E73E /* DisassemblerFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3083056A2D666B2C0046E73E /* DisassemblerFiles.swift */; };
+		3083058F2D666B2C0046E73E /* DisassemblerFilesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3083056B2D666B2C0046E73E /* DisassemblerFilesView.swift */; };
+		308305902D666B2C0046E73E /* DisassemblerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3083056C2D666B2C0046E73E /* DisassemblerView.swift */; };
+		308305912D666B2C0046E73E /* C64.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3083057A2D666B2C0046E73E /* C64.swift */; };
+		308305922D666B2C0046E73E /* C64_EmulatorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3083057B2D666B2C0046E73E /* C64_EmulatorApp.swift */; };
+		308305932D666B2C0046E73E /* C64View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3083057C2D666B2C0046E73E /* C64View.swift */; };
+		308305942D666B2C0046E73E /* CIA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3083057D2D666B2C0046E73E /* CIA.swift */; };
+		308305952D666B2C0046E73E /* D64Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3083057E2D666B2C0046E73E /* D64Format.swift */; };
+		308305962D666B2C0046E73E /* D64View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3083057F2D666B2C0046E73E /* D64View.swift */; };
+		308305972D666B2C0046E73E /* Floppy1541.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308305802D666B2C0046E73E /* Floppy1541.swift */; };
+		308305982D666B2C0046E73E /* Floppy1541View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308305812D666B2C0046E73E /* Floppy1541View.swift */; };
+		308305992D666B2C0046E73E /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308305832D666B2C0046E73E /* Keyboard.swift */; };
+		3083059A2D666B2C0046E73E /* KeyboardButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308305842D666B2C0046E73E /* KeyboardButtonStyle.swift */; };
+		3083059B2D666B2C0046E73E /* KeyboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308305852D666B2C0046E73E /* KeyboardView.swift */; };
+		3083059C2D666B2C0046E73E /* MOS6502.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308305862D666B2C0046E73E /* MOS6502.swift */; };
+		3083059D2D666B2C0046E73E /* MOS6502_Opcodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308305872D666B2C0046E73E /* MOS6502_Opcodes.swift */; };
+		3083059E2D666B2C0046E73E /* TVScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308305892D666B2C0046E73E /* TVScreen.swift */; };
+		3083059F2D666B2C0046E73E /* VICII.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3083058A2D666B2C0046E73E /* VICII.swift */; };
+		308305A02D666B2C0046E73E /* Bescii-Mono.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3083056E2D666B2C0046E73E /* Bescii-Mono.ttf */; };
+		308305A12D666B2C0046E73E /* C64 - 901226-01 - Commodore (F833D117) Basic.rom in Resources */ = {isa = PBXBuildFile; fileRef = 308305712D666B2C0046E73E /* C64 - 901226-01 - Commodore (F833D117) Basic.rom */; };
+		308305A22D666B2C0046E73E /* C64 - 901227-03 - Commodore (DBE3E7C7) Kernal.rom in Resources */ = {isa = PBXBuildFile; fileRef = 308305722D666B2C0046E73E /* C64 - 901227-03 - Commodore (DBE3E7C7) Kernal.rom */; };
+		308305A32D666B2C0046E73E /* C64_Characters.rom in Resources */ = {isa = PBXBuildFile; fileRef = 308305732D666B2C0046E73E /* C64_Characters.rom */; };
+		308305A72D666B2C0046E73E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 308305792D666B2C0046E73E /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		309637072D53DF6D004AD07D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -17,23 +45,39 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		308305682D666B2C0046E73E /* Disassembler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Disassembler.swift; sourceTree = "<group>"; };
+		308305692D666B2C0046E73E /* DisassemblerDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisassemblerDetailView.swift; sourceTree = "<group>"; };
+		3083056A2D666B2C0046E73E /* DisassemblerFiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisassemblerFiles.swift; sourceTree = "<group>"; };
+		3083056B2D666B2C0046E73E /* DisassemblerFilesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisassemblerFilesView.swift; sourceTree = "<group>"; };
+		3083056C2D666B2C0046E73E /* DisassemblerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisassemblerView.swift; sourceTree = "<group>"; };
+		3083056E2D666B2C0046E73E /* Bescii-Mono.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Bescii-Mono.ttf"; sourceTree = "<group>"; };
+		308305712D666B2C0046E73E /* C64 - 901226-01 - Commodore (F833D117) Basic.rom */ = {isa = PBXFileReference; lastKnownFileType = file; path = "C64 - 901226-01 - Commodore (F833D117) Basic.rom"; sourceTree = "<group>"; };
+		308305722D666B2C0046E73E /* C64 - 901227-03 - Commodore (DBE3E7C7) Kernal.rom */ = {isa = PBXFileReference; lastKnownFileType = file; path = "C64 - 901227-03 - Commodore (DBE3E7C7) Kernal.rom"; sourceTree = "<group>"; };
+		308305732D666B2C0046E73E /* C64_Characters.rom */ = {isa = PBXFileReference; lastKnownFileType = file; path = C64_Characters.rom; sourceTree = "<group>"; };
+		308305792D666B2C0046E73E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		3083057A2D666B2C0046E73E /* C64.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C64.swift; sourceTree = "<group>"; };
+		3083057B2D666B2C0046E73E /* C64_EmulatorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C64_EmulatorApp.swift; sourceTree = "<group>"; };
+		3083057C2D666B2C0046E73E /* C64View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C64View.swift; sourceTree = "<group>"; };
+		3083057D2D666B2C0046E73E /* CIA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CIA.swift; sourceTree = "<group>"; };
+		3083057E2D666B2C0046E73E /* D64Format.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = D64Format.swift; sourceTree = "<group>"; };
+		3083057F2D666B2C0046E73E /* D64View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = D64View.swift; sourceTree = "<group>"; };
+		308305802D666B2C0046E73E /* Floppy1541.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Floppy1541.swift; sourceTree = "<group>"; };
+		308305812D666B2C0046E73E /* Floppy1541View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Floppy1541View.swift; sourceTree = "<group>"; };
+		308305822D666B2C0046E73E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		308305832D666B2C0046E73E /* Keyboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keyboard.swift; sourceTree = "<group>"; };
+		308305842D666B2C0046E73E /* KeyboardButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardButtonStyle.swift; sourceTree = "<group>"; };
+		308305852D666B2C0046E73E /* KeyboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardView.swift; sourceTree = "<group>"; };
+		308305862D666B2C0046E73E /* MOS6502.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MOS6502.swift; sourceTree = "<group>"; };
+		308305872D666B2C0046E73E /* MOS6502_Opcodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MOS6502_Opcodes.swift; sourceTree = "<group>"; };
+		308305882D666B2C0046E73E /* Todos */ = {isa = PBXFileReference; lastKnownFileType = text; path = Todos; sourceTree = "<group>"; };
+		308305892D666B2C0046E73E /* TVScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVScreen.swift; sourceTree = "<group>"; };
+		3083058A2D666B2C0046E73E /* VICII.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VICII.swift; sourceTree = "<group>"; };
 		309636D52D5357F9004AD07D /* C64.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = C64.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		309637032D53DF6D004AD07D /* C64Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = C64Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		30FE06BF2D5C8F40005E5323 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-				Todos,
-			);
-			target = 309636D42D5357F9004AD07D /* C64 */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		309636D72D5357F9004AD07D /* C64 */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (30FE06BF2D5C8F40005E5323 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = C64; sourceTree = "<group>"; };
+		308305AD2D666B630046E73E /* Software */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Software; sourceTree = "<group>"; };
 		309637042D53DF6D004AD07D /* C64Tests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = C64Tests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -55,10 +99,77 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3083056D2D666B2C0046E73E /* Disassembler */ = {
+			isa = PBXGroup;
+			children = (
+				308305682D666B2C0046E73E /* Disassembler.swift */,
+				308305692D666B2C0046E73E /* DisassemblerDetailView.swift */,
+				3083056A2D666B2C0046E73E /* DisassemblerFiles.swift */,
+				3083056B2D666B2C0046E73E /* DisassemblerFilesView.swift */,
+				3083056C2D666B2C0046E73E /* DisassemblerView.swift */,
+			);
+			path = Disassembler;
+			sourceTree = "<group>";
+		};
+		3083056F2D666B2C0046E73E /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				3083056E2D666B2C0046E73E /* Bescii-Mono.ttf */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		308305702D666B2C0046E73E /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		308305742D666B2C0046E73E /* ROMs */ = {
+			isa = PBXGroup;
+			children = (
+				308305712D666B2C0046E73E /* C64 - 901226-01 - Commodore (F833D117) Basic.rom */,
+				308305722D666B2C0046E73E /* C64 - 901227-03 - Commodore (DBE3E7C7) Kernal.rom */,
+				308305732D666B2C0046E73E /* C64_Characters.rom */,
+			);
+			path = ROMs;
+			sourceTree = "<group>";
+		};
+		3083058B2D666B2C0046E73E /* C64 */ = {
+			isa = PBXGroup;
+			children = (
+				308305AD2D666B630046E73E /* Software */,
+				3083056F2D666B2C0046E73E /* Fonts */,
+				308305702D666B2C0046E73E /* Preview Content */,
+				308305742D666B2C0046E73E /* ROMs */,
+				308305792D666B2C0046E73E /* Assets.xcassets */,
+				3083056D2D666B2C0046E73E /* Disassembler */,
+				3083057A2D666B2C0046E73E /* C64.swift */,
+				3083057B2D666B2C0046E73E /* C64_EmulatorApp.swift */,
+				3083057C2D666B2C0046E73E /* C64View.swift */,
+				3083057D2D666B2C0046E73E /* CIA.swift */,
+				3083057E2D666B2C0046E73E /* D64Format.swift */,
+				3083057F2D666B2C0046E73E /* D64View.swift */,
+				308305802D666B2C0046E73E /* Floppy1541.swift */,
+				308305812D666B2C0046E73E /* Floppy1541View.swift */,
+				308305822D666B2C0046E73E /* Info.plist */,
+				308305832D666B2C0046E73E /* Keyboard.swift */,
+				308305842D666B2C0046E73E /* KeyboardButtonStyle.swift */,
+				308305852D666B2C0046E73E /* KeyboardView.swift */,
+				308305862D666B2C0046E73E /* MOS6502.swift */,
+				308305872D666B2C0046E73E /* MOS6502_Opcodes.swift */,
+				308305882D666B2C0046E73E /* Todos */,
+				308305892D666B2C0046E73E /* TVScreen.swift */,
+				3083058A2D666B2C0046E73E /* VICII.swift */,
+			);
+			path = C64;
+			sourceTree = "<group>";
+		};
 		309636CC2D5357F9004AD07D = {
 			isa = PBXGroup;
 			children = (
-				309636D72D5357F9004AD07D /* C64 */,
+				3083058B2D666B2C0046E73E /* C64 */,
 				309637042D53DF6D004AD07D /* C64Tests */,
 				309636D62D5357F9004AD07D /* Products */,
 			);
@@ -89,7 +200,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				309636D72D5357F9004AD07D /* C64 */,
+				308305AD2D666B630046E73E /* Software */,
 			);
 			name = C64;
 			packageProductDependencies = (
@@ -165,6 +276,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				308305A02D666B2C0046E73E /* Bescii-Mono.ttf in Resources */,
+				308305A12D666B2C0046E73E /* C64 - 901226-01 - Commodore (F833D117) Basic.rom in Resources */,
+				308305A22D666B2C0046E73E /* C64 - 901227-03 - Commodore (DBE3E7C7) Kernal.rom in Resources */,
+				308305A32D666B2C0046E73E /* C64_Characters.rom in Resources */,
+				308305A72D666B2C0046E73E /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -182,6 +298,26 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3083058C2D666B2C0046E73E /* Disassembler.swift in Sources */,
+				3083058D2D666B2C0046E73E /* DisassemblerDetailView.swift in Sources */,
+				3083058E2D666B2C0046E73E /* DisassemblerFiles.swift in Sources */,
+				3083058F2D666B2C0046E73E /* DisassemblerFilesView.swift in Sources */,
+				308305902D666B2C0046E73E /* DisassemblerView.swift in Sources */,
+				308305912D666B2C0046E73E /* C64.swift in Sources */,
+				308305922D666B2C0046E73E /* C64_EmulatorApp.swift in Sources */,
+				308305932D666B2C0046E73E /* C64View.swift in Sources */,
+				308305942D666B2C0046E73E /* CIA.swift in Sources */,
+				308305952D666B2C0046E73E /* D64Format.swift in Sources */,
+				308305962D666B2C0046E73E /* D64View.swift in Sources */,
+				308305972D666B2C0046E73E /* Floppy1541.swift in Sources */,
+				308305982D666B2C0046E73E /* Floppy1541View.swift in Sources */,
+				308305992D666B2C0046E73E /* Keyboard.swift in Sources */,
+				3083059A2D666B2C0046E73E /* KeyboardButtonStyle.swift in Sources */,
+				3083059B2D666B2C0046E73E /* KeyboardView.swift in Sources */,
+				3083059C2D666B2C0046E73E /* MOS6502.swift in Sources */,
+				3083059D2D666B2C0046E73E /* MOS6502_Opcodes.swift in Sources */,
+				3083059E2D666B2C0046E73E /* TVScreen.swift in Sources */,
+				3083059F2D666B2C0046E73E /* VICII.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

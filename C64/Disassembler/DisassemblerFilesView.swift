@@ -8,19 +8,19 @@
 import SwiftUI
 
 struct DisassemblerLoadFileView: View {
+    @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
     @ObservedObject var fileProvider = DisassemblerFilesProvider()
     var disassembler: DisassemblerViewModel
     var body: some View {
-        NavigationStack {
-            VStack {
-                Text("Disassembler Files")
-                Button("Load File") {
-                    fileProvider.loadFile(named: fileProvider.selectedFileName ?? "" , disassembler: disassembler)
-                }
+        VStack {
+            Text("Disassembler Files")
+            Button("Load File") {
+                fileProvider.loadFile(named: fileProvider.selectedFileName ?? "" , disassembler: disassembler)
+                presentationMode.wrappedValue.dismiss()
             }
-            List(fileProvider.disassemblerFiles, id: \.self, selection: $fileProvider.selectedFileName) { file in
-                Text(file)
-            }
+        }
+        List(fileProvider.disassemblerFiles, id: \.self, selection: $fileProvider.selectedFileName) { file in
+            Text(file)
         }
         .onAppear() {
             fileProvider.updateDirectory()
@@ -29,6 +29,7 @@ struct DisassemblerLoadFileView: View {
 }
 
 struct DisassemblerSaveFileView: View {
+    @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
     @ObservedObject var fileProvider = DisassemblerFilesProvider()
     var disassembler: DisassemblerViewModel
     
@@ -41,6 +42,7 @@ struct DisassemblerSaveFileView: View {
                 .textFieldStyle(.roundedBorder)
             Button("Save") {
                 fileProvider.saveFile(named: filename, disassembler: disassembler)
+                presentationMode.wrappedValue.dismiss()
             }
         }
     }
