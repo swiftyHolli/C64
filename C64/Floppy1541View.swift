@@ -10,7 +10,7 @@ import SwiftUI
 struct Floppy1541View: View {
     @ObservedObject var floppy1541 = Floppy1541()
     @State var selectedDisk: Floppy1541.Disk.ID?
- 
+
     var body: some View {
         NavigationStack {
             VStack {
@@ -43,11 +43,15 @@ struct Floppy1541View: View {
                     }
                 }
                 
-                List(floppy1541.disks.first(where: { $0.id == selectedDisk})?.files ?? [], id: \.self) {file in
-                    HStack {
-                        Text(file.name)
-                        Spacer()
-                        Text(file.type)
+                List(floppy1541.disks.first(where: { $0.id == selectedDisk} )?.files ?? [], id: \.self) {file in
+                    NavigationLink {
+                        FileDetailView(floppy1541: floppy1541, disk: selectedDisk!, fileID: file.id)
+                    } label: {
+                        HStack {
+                            Text(file.name)
+                            Spacer()
+                            Text(file.type)
+                        }
                     }
                 }
             }
@@ -62,8 +66,4 @@ struct Floppy1541View: View {
             floppy1541.saveDisks()
         }
     }
-}
-
-#Preview {
-    Floppy1541View(floppy1541: Floppy1541())
 }

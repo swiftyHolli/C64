@@ -11,7 +11,7 @@ class D64Format: ObservableObject {
     
     struct FileEntry: Hashable, Identifiable {
         var id = UUID()
-        var type = ""
+        var type = Floppy1541.FileType.PRG
         var firstDataBlock = BlockAddress(track: 0, block: 0)
         var fileName = ""
         var firstSideSectorBlock = BlockAddress(track: 0, block: 0)
@@ -72,7 +72,7 @@ class D64Format: ObservableObject {
                 if d64Disk[pointer] == 0 {
                     break
                 }
-                entry.type = fileTypeString(d64Disk[pointer])
+                entry.type = fileType(d64Disk[pointer])
                 pointer += 1
                 entry.firstDataBlock.track = Int(Word(d64Disk[pointer]))
                 pointer += 1
@@ -107,20 +107,20 @@ class D64Format: ObservableObject {
         }
     }
     
-    private func fileTypeString(_ type: Byte)->String{
+    private func fileType(_ type: Byte)->Floppy1541.FileType{
         switch type {
             case 0x80:
-            return "DEL"
+            return .DEL
         case 0x81:
-            return "SEQ"
+            return .SEQ
         case 0x82:
-            return "PRG"
+            return .PRG
         case 0x83:
-            return "USR"
+            return .USR
         case 0x84:
-            return "REL"
+            return .REL
         default:
-            return "Unknown"
+            return .UKN
         }
     }
     

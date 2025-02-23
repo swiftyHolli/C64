@@ -11,10 +11,7 @@ import UIKit
 class VICII: ObservableObject {
     
     var c64 = C64.shared
-    
-    var videoBuffer = [Byte](repeating: 0, count: 320*200)
-    @Published var canvasBuffer = [Byte](repeating: 0, count: 320*200)
-        
+            
     struct Registers {
         var M0X: Byte = 0
         var M0Y: Byte = 0
@@ -80,9 +77,17 @@ class VICII: ObservableObject {
     
     private var cyclCounter = 0
     
+    private var context: CGContext?
+    @Published var image = UIImage()
+    
     init() {
         c64.vic = self
         print("VICII")
+        UIGraphicsBeginImageContext(CGSize(width: 320, height: 200))
+        context = UIGraphicsGetCurrentContext()
+        context?.setLineWidth(1)
+
+        UIGraphicsEndImageContext()
     }
 
     func setRegister(address: Int, byte: Byte) {
@@ -339,7 +344,8 @@ class VICII: ObservableObject {
         }
         if(raster == 247 && cyclCounter == 0) {
             DispatchQueue.main.async {[weak self] in
-                self?.canvasBuffer = self?.videoBuffer ?? [Byte]()
+                let cgImage = self?.context?.makeImage()
+                self?.image = UIImage(cgImage: cgImage!)
             }
         }
     }
@@ -363,11 +369,11 @@ class VICII: ObservableObject {
         let pixelLine = (raster - 49) % 8
         let colorCode = colorLineBuffer[cyclCounter - 16]
         let characterLineBits = characterLineBuffer[(cyclCounter - 16) * 8 + pixelLine]
+        let startX = (cyclCounter - 16) * 8
+        let y = raster - 49 + yScroll - 3
         for pixel in 0..<8 {
             let pixelColor = (characterLineBits & (0x80 >> pixel)) > 0 ?  colorCode : registers.B0C
-            let videoBufferAddress = (raster - 49 + yScroll - 3) * 320 + (cyclCounter - 16) * 8 + pixel
-            if videoBufferAddress < 0 || videoBufferAddress >= videoBuffer.count { continue }
-            videoBuffer[videoBufferAddress] = pixelColor
+            drawPixel(x: startX + pixel, y: y, color: pixelColor)
         }
     }
     
@@ -375,5 +381,50 @@ class VICII: ObservableObject {
         raster >= 48 && raster < 248 && cyclCounter == 0 //(raster & 0x07 == yScroll) &&
     }
     
+    func drawPixel(x:Int, y:Int, color: Byte) {
+        context?.move(to: CGPoint(x: x, y: y))
+        context?.addLine(to: CGPoint(x: x, y: y + 1))
+        context?.setStrokeColor(colorFromCode(color))
+        context?.strokePath()
+    }
+}
+
+func colorFromCode(_ code: Byte)->CGColor {
+    switch code {
+    case 0:
+        return CGColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
+    case 1:
+        return CGColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+    case 2:
+        return CGColor(red: 104 / 255, green: 55 / 255, blue: 43 / 255, alpha: 1.0)
+    case 3:
+        return CGColor(red: 112 / 255, green: 164 / 255, blue: 178 / 255, alpha: 1.0)
+    case 4:
+        return CGColor(red: 111 / 255, green: 61 / 255, blue: 134 / 255, alpha: 1.0)
+    case 5:
+        return CGColor(red: 88 / 255, green: 141 / 255, blue: 67 / 255, alpha: 1.0)
+    case 6:
+        return CGColor(red: 53 / 255, green: 40 / 255, blue: 178 / 255, alpha: 1.0)
+    case 7:
+        return CGColor(red: 184 / 255, green: 199 / 255, blue: 111 / 255, alpha: 1.0)
+    case 8:
+        return CGColor(red: 112 / 255, green: 79 / 255, blue: 37 / 255, alpha: 1.0)
+    case 9:
+        return CGColor(red: 67 / 255, green: 57 / 255, blue: 0 / 255, alpha: 1.0)
+    case 10:
+        return CGColor(red: 154 / 255, green: 103 / 255, blue: 89 / 255, alpha: 1.0)
+    case 11:
+        return CGColor(red: 68 / 255, green: 68 / 255, blue: 68 / 255, alpha: 1.0)
+    case 12:
+        return CGColor(red: 108 / 255, green: 108 / 255, blue: 108 / 255, alpha: 1.0)
+    case 13:
+        return CGColor(red: 154 / 255, green: 210 / 255, blue: 132 / 255, alpha: 1.0)
+    case 14:
+        return CGColor(red: 108 / 255, green: 94 / 255, blue: 181 / 255, alpha: 1.0)
+    case 15:
+        return CGColor(red: 149 / 255, green: 149 / 255, blue: 149 / 255, alpha: 1.0)
+    default:
+        return CGColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
+    }
 }
 

@@ -10,6 +10,8 @@ import SwiftUI
 struct DisassemblerLoadFileView: View {
     @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
     @ObservedObject var fileProvider = DisassemblerFilesProvider()
+    @State var selectedFileName: String?
+    
     var disassembler: DisassemblerViewModel
     var body: some View {
         VStack {
@@ -19,8 +21,13 @@ struct DisassemblerLoadFileView: View {
                 presentationMode.wrappedValue.dismiss()
             }
         }
-        List(fileProvider.disassemblerFiles, id: \.self, selection: $fileProvider.selectedFileName) { file in
-            Text(file)
+        List(selection: $fileProvider.selectedFileName){
+            ForEach(fileProvider.disassemblerFiles, id: \.self) { file in
+                Text(file)
+            }
+            .onDelete { indexSet in
+                fileProvider.removeFile(named: fileProvider.disassemblerFiles[indexSet.first!])
+            }
         }
         .onAppear() {
             fileProvider.updateDirectory()

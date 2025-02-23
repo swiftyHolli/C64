@@ -10,7 +10,17 @@ import SwiftUI
 
 class Floppy1541: ObservableObject {
     private var c64 = C64.shared
-        
+    
+    var openedFile: File?
+    
+    enum FileType: String, Codable {
+        case PRG, SEQ, USR, REL, DEL, UKN
+    }
+
+    enum FileMode: String, Codable {
+        case READ, WRITE, APPEND, MODIFY
+    }
+    
     init() {
         c64.floppy1541 = self
         loadDisks()
@@ -25,10 +35,29 @@ class Floppy1541: ObservableObject {
     struct File: Encodable, Decodable, Hashable, Identifiable {
         var id = UUID()
         var name: String
-        var type: String
+        var type: FileType
         var data: Data
+        var open: Bool = false
+        var mode: FileMode = .READ
+        var filenumber: Int = 0
+    }
+    
+    func startAddress(diskID: Disk.ID, fileID: File.ID) -> String {
+        if let file = disks.first(where: { $0.id == diskID })?.files.first(where: { $0.id == fileID }) {
+            let startAddress = String(format: "%02X%02X", file.data[1], file.data[0])
+            return startAddress
+        }
+        return ""
     }
 
+    func endAddress(diskID: Disk.ID, fileID: File.ID) -> String {
+        if let file = disks.first(where: { $0.id == diskID })?.files.first(where: { $0.id == fileID }) {
+            let endAddress = String(format: "%04X", file.data.count - 2 + Int((Word((file.data[1])) << 8) | Word(file.data[0])))
+            return endAddress
+        }
+        return ""
+    }
+    
     func saveDisks() {
         let jsonData = try! JSONEncoder().encode(disks)
         try? jsonData.write(to: URL.documentsDirectory.appendingPathComponent("disks.json"))
@@ -73,6 +102,75 @@ class Floppy1541: ObservableObject {
     
     @Published var disks: [Disk] = []
     
+    func open(_ fileName: String, fileNumber: Int) {
+        if let name = fileName.split(separator: ",", omittingEmptySubsequences: false).first {
+            if name.count > 0 {
+                let type = getFileTypeFromName(fileName)
+                let mode = getModeFromName(fileName)
+                if let insertedDisk = disks.first(where: { $0.isInserted }) {
+                    if let fileToOpen = insertedDisk.files.first(where: { $0.name == fileName }) {
+                        openedFile = fileToOpen
+                        openedFile?.type = type
+                        openedFile?.mode = mode
+                        openedFile?.filenumber = fileNumber
+                    }
+                    else  {
+                        openedFile = File(name: String(name), type: type, data: Data([Byte]()), filenumber: fileNumber)
+                    }
+                }
+            }
+        }
+    }
+    
+    func getFileTypeFromName(_ fileName: String) -> FileType {
+        let separatedStrings = fileName.split(separator: ",", omittingEmptySubsequences: false)
+        var type = FileType.PRG
+        if let nameComponent = separatedStrings.first {
+            if separatedStrings.count > 1 {
+                let typeComponent = separatedStrings[1]
+                switch typeComponent {
+                case "PRG", "P":
+                    type = .PRG
+                case "SEQ", "S":
+                    type = .SEQ
+                case "USR", "U":
+                    type = .USR
+                case "REL", "L":
+                    type = .REL
+                default:
+                    type = .PRG
+                }
+            }
+        }
+        return type
+    }
+    
+    func getModeFromName(_ fileName: String) -> FileMode {
+        let separatedStrings = fileName.split(separator: ",", omittingEmptySubsequences: false)
+        var mode = FileMode.READ
+        var modeComponent: String = ""
+        if let nameComponent = separatedStrings.first {
+            if separatedStrings.count > 2 {
+                modeComponent = String(separatedStrings[2])
+            } else if separatedStrings.count > 1 {
+                modeComponent = String(separatedStrings[1])
+            }
+            switch modeComponent {
+            case "R":
+                mode = .READ
+            case "W":
+                mode = .WRITE
+            case "A":
+                mode = .APPEND
+            case "M":
+                mode = .MODIFY
+            default:
+                mode = .READ
+            }
+        }
+        return mode
+    }
+    
     func writeFile(_ fileName: String, startAddress: Int, endAddress: Int) {
         let fileName = realFilename(fileName)
         guard let diskIndex = disks.firstIndex(where: {$0.isInserted == true}) else {return}
@@ -83,7 +181,7 @@ class Floppy1541: ObservableObject {
             disks[diskIndex].files[fileIndex].data = Data(dataToWrite)
         }
         else {
-            disks[diskIndex].files.append(File(name: fileName, type: "PRG", data: Data(dataToWrite)))
+            disks[diskIndex].files.append(File(name: fileName, type: .PRG, data: Data(dataToWrite)))
         }
         saveDisks()
     }
@@ -150,7 +248,7 @@ class Floppy1541: ObservableObject {
             data.append(Byte(blockCount >> 8))
             data.append(contentsOf: [32, 32, 32])
             data.append(contentsOf: fileName.utf8)
-            data.append(contentsOf: file.type.utf8)
+            data.append(contentsOf: file.type.rawValue.utf8)
             data.append(0x0)
         }
         nextAddress += 14

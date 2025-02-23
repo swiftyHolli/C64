@@ -9,7 +9,7 @@ import SwiftUI
 
 struct DisassemblerView: View {
     @ObservedObject var disassembler = DisassemblerViewModel()
-    @State var selectedLines = Set<Disassembler.Line.ID>()
+    @State var selectedLines = Set<Disassembler.DisassemblyLine.ID>()
     var body: some View {
         VStack {
             controlView
@@ -34,10 +34,6 @@ struct DisassemblerView: View {
             NavigationLink(destination: DisassemblerSaveFileView(disassembler: disassembler)) {
                 Image(systemName: "square.and.arrow.down")
             }
-            Button("Data") {
-                selectedLines.removeAll()
-            }
-            .disabled(selectedLines.isEmpty)
         }
         .fixedSize(horizontal: false, vertical: true)
         .buttonStyle(.borderedProminent)
@@ -63,7 +59,7 @@ struct DisassemblerView: View {
 }
 
 struct DisassemblerLineView: View {
-    let line: Disassembler.Line
+    let line: Disassembler.DisassemblyLine
     @ObservedObject var vm: DisassemblerViewModel
     var body: some View {
         HStack(alignment: .top) {
@@ -84,6 +80,7 @@ struct DisassemblerLineView: View {
                             }
                             .tint(.red)
                     } else {
+                        Text("Data: ")
                         Text(vm.dataString(line.id))
                             .swipeActions {
                                 Button(line.dataView == .ascii ? "Hex" :"ASCII") {

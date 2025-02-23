@@ -8,18 +8,16 @@
 import SwiftUI
 
 class DisassemblerFilesProvider: ObservableObject {
+    @Published var files = DisassemblerFiles()
+    @Published var selectedFileName: String?
     
-    @Published var files: DisassemblerFiles = .init()
-    
+    var disassemblerFiles: [String] {
+        files.disassemblerFiles
+    }
+
     init () {
         files.readFilesInDisassemblerDirectory()
     }
-    
-    var disassemblerFiles: [String] {
-        return files.disassemblerFiles
-    }
-    
-    var selectedFileName: String?
     
     func saveFile(named fileName: String, disassembler: DisassemblerViewModel) {
         disassembler.disassembler.save(files.disassemblerDirectoryURL.appendingPathComponent(fileName))
@@ -34,16 +32,16 @@ class DisassemblerFilesProvider: ObservableObject {
         files.readFilesInDisassemblerDirectory()
     }
     
+    func removeFile(named fileName: String) {
+        files.removeFile(named: fileName)
+    }
+    
 }
 
 struct DisassemblerFiles {
     
     var disassemblerFiles: [String] = []
             
-    mutating func removeFile(named fileName: String) {
-        disassemblerFiles.removeAll(where: { $0 == fileName})
-    }
-    
     var disassemblerDirectoryURL: URL {
         return URL.documentsDirectory.appendingPathComponent("Disassembler")
     }
@@ -69,6 +67,18 @@ struct DisassemblerFiles {
             catch { let error = error
                 fatalError("Could not read directory \(disassamblerDirectory): \(error)")
             }
+        }
+    }
+    
+    mutating func removeFile(named fileName: String) {
+        let fileManager = FileManager.default
+        let disassamblerDirectory = URL.documentsDirectory.appending(component: "Disassembler")
+        do {
+            try fileManager.removeItem(at: disassamblerDirectory.appendingPathComponent(fileName))
+            disassemblerFiles.removeAll(where: { $0 == fileName})
+        }
+        catch { let error = error
+            print("Error removing file: \(error)")
         }
     }
 }

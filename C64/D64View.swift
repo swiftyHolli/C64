@@ -27,7 +27,7 @@ public struct D64View: View {
                     Text("\(entry.numerOfBlocks)  ")
                     Text(entry.fileName)
                     Spacer()
-                    Text(entry.type)
+                    Text(entry.type.rawValue)
                 }
             }
         }

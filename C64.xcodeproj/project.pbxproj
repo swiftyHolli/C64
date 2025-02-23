@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		304D13362D69D7510099D57A /* Floppy1541FileDetailsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304D13352D69D7360099D57A /* Floppy1541FileDetailsView.swift */; };
 		3083058C2D666B2C0046E73E /* Disassembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308305682D666B2C0046E73E /* Disassembler.swift */; };
 		3083058D2D666B2C0046E73E /* DisassemblerDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308305692D666B2C0046E73E /* DisassemblerDetailView.swift */; };
 		3083058E2D666B2C0046E73E /* DisassemblerFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3083056A2D666B2C0046E73E /* DisassemblerFiles.swift */; };
@@ -45,6 +46,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		304D13352D69D7360099D57A /* Floppy1541FileDetailsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Floppy1541FileDetailsView.swift; sourceTree = "<group>"; };
 		308305682D666B2C0046E73E /* Disassembler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Disassembler.swift; sourceTree = "<group>"; };
 		308305692D666B2C0046E73E /* DisassemblerDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisassemblerDetailView.swift; sourceTree = "<group>"; };
 		3083056A2D666B2C0046E73E /* DisassemblerFiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisassemblerFiles.swift; sourceTree = "<group>"; };
@@ -153,6 +155,7 @@
 				3083057F2D666B2C0046E73E /* D64View.swift */,
 				308305802D666B2C0046E73E /* Floppy1541.swift */,
 				308305812D666B2C0046E73E /* Floppy1541View.swift */,
+				304D13352D69D7360099D57A /* Floppy1541FileDetailsView.swift */,
 				308305822D666B2C0046E73E /* Info.plist */,
 				308305832D666B2C0046E73E /* Keyboard.swift */,
 				308305842D666B2C0046E73E /* KeyboardButtonStyle.swift */,
@@ -309,6 +312,7 @@
 				308305942D666B2C0046E73E /* CIA.swift in Sources */,
 				308305952D666B2C0046E73E /* D64Format.swift in Sources */,
 				308305962D666B2C0046E73E /* D64View.swift in Sources */,
+				304D13362D69D7510099D57A /* Floppy1541FileDetailsView.swift in Sources */,
 				308305972D666B2C0046E73E /* Floppy1541.swift in Sources */,
 				308305982D666B2C0046E73E /* Floppy1541View.swift in Sources */,
 				308305992D666B2C0046E73E /* Keyboard.swift in Sources */,

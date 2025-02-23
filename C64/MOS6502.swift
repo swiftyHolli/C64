@@ -121,7 +121,7 @@ class MOS6502 {
         if INT { INThandler() }
         if NMI { NMIhandler() }
         
-        if c64.breakpoints.contains(Int(PC)) || PC == 0xf1ad
+        if c64.breakpoints.contains(Int(PC)) || PC == 0xedd0 || PC == 0xf20e
         {
             stop += 1
         }
@@ -1090,9 +1090,12 @@ class MOS6502 {
     
     private func kernalOverrides() {
         switch PC {
-        case 0xF4C8:
+        case 0xF4C8: // load to memory from iec bus
+            PC = 0xF4F0 // print loading... verifying...
+        case 0xF4F3:
             load()
-        case 0xF605:
+            
+        case 0xF605: // save to iec bus
             let device = Int(c64.memory[0xBA])
             if device != 8 {
                 return
@@ -1105,22 +1108,44 @@ class MOS6502 {
             c64.kernalROM[0x1607] = 0xF3
             save()
             return
-        case 0xF3E1: //IEC-Bus Open
+        case 0xF3E1: //IEC-Bus Open Sekundäradresse und filename senden
+            if !checkDeviceNumber() { return }
+            print("file open on IEC-Bus 0xF3E1")
+            openFile()
             c64.memory[0x90] = 0x00 //serial status = OK
             PC = 0xf3ed
             return
         case 0xF237: //Eingabe vom IEC-Bus
-            PC = 0xF235
+            print("input from IEC-Bus 0xF237")
+            if A == 8 {
+                PC = 0xF233 // good! exit
+            }
+            return
+        case 0xF279: // Set output to IEC-Bus
+            if !checkDeviceNumber() { return }
+            print("set output to IEC-Bus 0xF279")
+            PC = 0xF275 // zurück ohne Fehler
+            return
+        case 0xEDDD: // ein Zeichen (A) an IEC-Bus ausgeben
+            print("A: \(A) to IEC-Bus 0xEDD0")
+            writeByteToFile()
+            return
+        case 0xEE13: // ein Zeichen (A) vom IEC-Bus holen
+            print("get characters from IEC-Bus 0xEE13 (until eoi)")
+            print(filename())
+            if !checkDeviceNumber() { return }
+            A = 0x41
+            c64.memory[0x90] = 0x64 // set end of identify
+            PC = 0xEE82
             return
         default:
             break
+            // FFC6 input#
+            // FFC9 print#
         }
         return
         func load() {
-            let device = Int(c64.memory[0xBA])
-            if device != 8 {
-                return
-            }
+            if !checkDeviceNumber() { return }
             let address = Int(Word(c64.memory[0xC4]) << 8 | Word(c64.memory[0xC3]))
             let verify = A > 0
             let secAddress = c64.memory[0xB9]
@@ -1131,19 +1156,32 @@ class MOS6502 {
                 return
             }
             C = true //Error flag
-            PC = 0xF5AA
+            PC = 0xF5AA // Datei geladen, ohne Fehler zurück
         }
         
         func save() {
-            let device = Int(c64.memory[0xBA])
-            if device != 8 {
-                return
-            }
+            if !checkDeviceNumber() { return }
             let endAddress = Int(Word(c64.memory[0xAF]) << 8 | Word(c64.memory[0xAE]))
             let startAddress = Int(Word(c64.memory[0xC2]) << 8 | Word(c64.memory[0xC1]))
-            c64.saveFile(filename(), device: device, startAddress: startAddress, endAddress: endAddress)
+            c64.saveFile(filename(), device: 8, startAddress: startAddress, endAddress: endAddress)
             PC = 0xF68D
         }
+        
+        func openFile() {
+            c64.openFile(filename(), fileNumber: <#T##Int#>)
+            return
+        }
+        
+        func writeByteToFile() {
+
+            return
+        }
+        
+        func checkDeviceNumber() -> Bool {
+            let device = Int(c64.memory[0xBA])
+            return device == 8
+        }
+        
         func filename()->String{
             let fileNameLength = c64.memory[0xB7]
             var fileNameAddress = Int(Word(c64.memory[0xBC]) << 8 | Word(c64.memory[0xBB]))

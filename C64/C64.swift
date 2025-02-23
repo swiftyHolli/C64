@@ -97,19 +97,18 @@ class C64: ObservableObject {
         mos6502.c64 = self
         mos6502.reset()
         run()
-        //startTimer()
     }
     
     func run() {
         DispatchQueue.global(qos: .userInteractive).async {
             while true {
-                let startTime = DispatchTime.now()
+                //let startTime = DispatchTime.now()
                 for _ in 0..<10 {
                     self.clock()
                 }
-                let endTime = DispatchTime.now()
-                self.elapsedTime = Int((endTime.uptimeNanoseconds - startTime.uptimeNanoseconds) / 1000)
-                usleep(2)
+                //let endTime = DispatchTime.now()
+                // self.elapsedTime = Int((endTime.uptimeNanoseconds - startTime.uptimeNanoseconds) / 1000)
+                usleep(1)
             }
         }
     }
@@ -228,6 +227,10 @@ class C64: ObservableObject {
                 }
             }
         }
+    }
+    
+    func openFile(_ fileName: String, fileNumber: Int) {
+        floppy1541?.open(fileName, fileNumber: fileNumber)
     }
     
     func loadFile(_ fileName: String, startAddress: Int, verify: Bool, secAddress: Byte)->Int? {
