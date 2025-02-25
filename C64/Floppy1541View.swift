@@ -50,7 +50,7 @@ struct Floppy1541View: View {
                         HStack {
                             Text(file.name)
                             Spacer()
-                            Text(file.type)
+                            Text(file.type.rawValue)
                         }
                     }
                 }
@@ -60,7 +60,7 @@ struct Floppy1541View: View {
         }
         .onAppear() {
             floppy1541.loadDisks()
-            selectedDisk = floppy1541.disks.first!.id
+            selectedDisk = floppy1541.disks.first?.id
         }
         .onDisappear() {
             floppy1541.saveDisks()

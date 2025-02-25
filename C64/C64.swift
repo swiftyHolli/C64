@@ -229,8 +229,8 @@ class C64: ObservableObject {
         }
     }
     
-    func openFile(_ fileName: String, fileNumber: Int) {
-        floppy1541?.open(fileName, fileNumber: fileNumber)
+    func openFile(_ fileName: String, secAddress: Int) {
+        floppy1541?.open(fileName, secAddress: secAddress)
     }
     
     func loadFile(_ fileName: String, startAddress: Int, verify: Bool, secAddress: Byte)->Int? {

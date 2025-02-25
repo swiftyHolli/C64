@@ -11,7 +11,7 @@ import SwiftUI
 class Floppy1541: ObservableObject {
     private var c64 = C64.shared
     
-    var openedFile: File?
+    var openedFiles = [File]()
     
     enum FileType: String, Codable {
         case PRG, SEQ, USR, REL, DEL, UKN
@@ -20,6 +20,10 @@ class Floppy1541: ObservableObject {
     enum FileMode: String, Codable {
         case READ, WRITE, APPEND, MODIFY
     }
+    
+    let driveErrors: [Int : String] = [0 : "OK", 1 : "OK", 30: "SYNTAX ERROR", 31: "SYNTAX ERROR", 32: "SYNTAX ERROR", 33: "SYNTAX ERROR", 34: "SYNTAX ERROR", 39: "SYNTAX ERROR", 60: "WRITE FILE OPEN", 61: "FILE NOT OPEN", 62: "FILE NOT FOUND", 63: "FILE EXISTS", 64: "FILE TYPE MISMATCH",  70: "NO CHANNEL", 74: "DRIVE NOT READY"]
+    
+    var lastError = 0
     
     init() {
         c64.floppy1541 = self
@@ -39,7 +43,15 @@ class Floppy1541: ObservableObject {
         var data: Data
         var open: Bool = false
         var mode: FileMode = .READ
-        var filenumber: Int = 0
+        var secAddress: Int = 0
+    }
+    
+    struct FileOpenProperties {
+        var filename: String = ""
+        var fileType: FileType = .PRG
+        var mode: FileMode = .READ
+        var error: Int = 0
+        var override: Bool = false
     }
     
     func startAddress(diskID: Disk.ID, fileID: File.ID) -> String {
@@ -102,74 +114,153 @@ class Floppy1541: ObservableObject {
     
     @Published var disks: [Disk] = []
     
-    func open(_ fileName: String, fileNumber: Int) {
-        if let name = fileName.split(separator: ",", omittingEmptySubsequences: false).first {
-            if name.count > 0 {
-                let type = getFileTypeFromName(fileName)
-                let mode = getModeFromName(fileName)
-                if let insertedDisk = disks.first(where: { $0.isInserted }) {
-                    if let fileToOpen = insertedDisk.files.first(where: { $0.name == fileName }) {
-                        openedFile = fileToOpen
-                        openedFile?.type = type
-                        openedFile?.mode = mode
-                        openedFile?.filenumber = fileNumber
+    func open(_ fileName: String, secAddress: Int)->Bool {
+        let fileToOpenProperties = parseFilenameToOpen(fileName)
+        if openedFiles.contains(where: { $0.name == fileToOpenProperties.filename || $0.secAddress == secAddress}) {
+            // No channel Error
+            lastError = 70
+            return false
+        }
+        
+        if let insertedDisk = disks.first(where: { $0.isInserted }) {
+            if openedFiles.count >= 5 {
+                // No channel error
+                lastError = 70
+                return false
+            }
+            if fileToOpenProperties.mode == .READ ||
+                fileToOpenProperties.mode == .APPEND ||
+                fileToOpenProperties.mode == .MODIFY {
+                let predicate = NSPredicate(format: "SELF LIKE %@", String(fileToOpenProperties.filename))
+                //Search for the first file with matching patterns
+                if var fileToOpen = insertedDisk.files.first(where: { predicate.evaluate(with: $0)}) {
+                    fileToOpen.name = fileToOpenProperties.filename
+                    fileToOpen.type = fileToOpenProperties.fileType
+                    fileToOpen.mode = fileToOpenProperties.mode
+                    fileToOpen.secAddress = secAddress
+                    openedFiles.append(fileToOpen)
+                }
+                else {
+                    // File not found Error
+                    lastError = 62
+                    return false
+                }
+            }
+            else  if fileToOpenProperties.mode == .WRITE {
+                if insertedDisk.files.contains(where: { $0.name == fileToOpenProperties.filename}) {
+                    // File exists Error
+                    lastError = 63
+                    return false
+                }
+                let newFileToOpen = File(name: String(fileToOpenProperties.filename),
+                                         type: fileToOpenProperties.fileType,
+                                         data: Data([Byte]()),
+                                         mode: fileToOpenProperties.mode,
+                                         secAddress: secAddress)
+                openedFiles.append(newFileToOpen)
+            }
+        }
+        else {
+            // drive not ready error
+            lastError = 74
+            return false
+        }
+        print(openedFiles)
+        return true
+    }
+
+    
+    func parseFilenameToOpen(_ filename: String) -> FileOpenProperties {
+        var properties = FileOpenProperties()
+        var name = filename.split(separator: ":", omittingEmptySubsequences: false)
+        if name.count > 2 {
+            // contains at least two ":"
+            properties.error = 34 // SYNTAX ERROR no file given
+        }
+        if name.count == 2 {
+            //contains one ":"
+            if let driveNumberComponent = name.first {
+                if driveNumberComponent.count == 1 {
+                    // number shoud be 0
+                    if driveNumberComponent != "0" {
+                        // Syntax Error
+                        properties.error = 33 //invalid Filename ?
                     }
-                    else  {
-                        openedFile = File(name: String(name), type: type, data: Data([Byte]()), filenumber: fileNumber)
+                }
+                if driveNumberComponent.count == 2 {
+                    if driveNumberComponent == "$0" {
+                        properties.filename = "$"
+                    }
+                    else if driveNumberComponent == "@0" {
+                        properties.override = true
                     }
                 }
             }
         }
-    }
-    
-    func getFileTypeFromName(_ fileName: String) -> FileType {
-        let separatedStrings = fileName.split(separator: ",", omittingEmptySubsequences: false)
-        var type = FileType.PRG
-        if let nameComponent = separatedStrings.first {
-            if separatedStrings.count > 1 {
-                let typeComponent = separatedStrings[1]
-                switch typeComponent {
-                case "PRG", "P":
-                    type = .PRG
-                case "SEQ", "S":
-                    type = .SEQ
-                case "USR", "U":
-                    type = .USR
-                case "REL", "L":
-                    type = .REL
-                default:
-                    type = .PRG
-                }
-            }
+        name = filename.split(separator: ",", omittingEmptySubsequences: false)
+        if name.count > 3 {
+            // too many commas - Syntax error
+            properties.error = 33
         }
-        return type
-    }
-    
-    func getModeFromName(_ fileName: String) -> FileMode {
-        let separatedStrings = fileName.split(separator: ",", omittingEmptySubsequences: false)
-        var mode = FileMode.READ
-        var modeComponent: String = ""
-        if let nameComponent = separatedStrings.first {
-            if separatedStrings.count > 2 {
-                modeComponent = String(separatedStrings[2])
-            } else if separatedStrings.count > 1 {
-                modeComponent = String(separatedStrings[1])
+        if name.count == 3 {
+            let typeComponent = name[1]
+            // middle section contains file type; last section contains mode
+            switch typeComponent {
+            case "PRG", "P":
+                properties.fileType = .PRG
+            case "SEQ", "S":
+                properties.fileType = .SEQ
+            case "USR", "U":
+                properties.fileType = .USR
+            case "REL", "L":
+                properties.fileType = .REL
+            default:
+                break
             }
+            let modeComponent = name[2]
+            // last section contains mode
             switch modeComponent {
             case "R":
-                mode = .READ
+                properties.mode = .READ
             case "W":
-                mode = .WRITE
+                properties.mode = .WRITE
             case "A":
-                mode = .APPEND
+                properties.mode = .APPEND
             case "M":
-                mode = .MODIFY
+                properties.mode = .MODIFY
+            case "PRG", "P":
+                properties.fileType = .PRG
+            case "SEQ", "S":
+                properties.fileType = .SEQ
+            case "USR", "U":
+                properties.fileType = .USR
+            case "REL", "L":
+                properties.fileType = .REL
             default:
-                mode = .READ
+                // here should be an error
+                break
             }
         }
-        return mode
+        if name.count == 2 {
+            // last section contains file type or mode
+            let modeTypeComponent = name[1]
+            switch modeTypeComponent {
+            case "R":
+                properties.mode = .READ
+            case "W":
+                properties.mode = .WRITE
+            case "A":
+                properties.mode = .APPEND
+            case "M":
+                properties.mode = .MODIFY
+            default:
+                // here should be an error
+                break
+            }
+        }
+        return properties
     }
+    
     
     func writeFile(_ fileName: String, startAddress: Int, endAddress: Int) {
         let fileName = realFilename(fileName)

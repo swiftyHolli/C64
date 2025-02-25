@@ -1168,7 +1168,7 @@ class MOS6502 {
         }
         
         func openFile() {
-            c64.openFile(filename(), fileNumber: <#T##Int#>)
+            c64.openFile(filename(), secAddress: secAddress())
             return
         }
         
@@ -1192,6 +1192,10 @@ class MOS6502 {
             }
             let fileNameString = String(bytes: fileName, encoding: .ascii)!
             return fileNameString
+        }
+        
+        func secAddress() -> Int {
+            Int(c64.memory[0xB9])
         }
     }
         
