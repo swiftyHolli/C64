@@ -229,8 +229,24 @@ class C64: ObservableObject {
         }
     }
     
-    func openFile(_ fileName: String, secAddress: Int) {
-        floppy1541?.open(fileName, secAddress: secAddress)
+    func openFile(_ fileName: String, secAddress: Int)->Bool {
+        return floppy1541?.open(fileName, secAddress: secAddress) ?? false
+    }
+    
+    func closeFile(secondaryAddress: Int)->Bool {
+        return floppy1541?.closeFile(secondaryAddress: secondaryAddress) ?? false
+    }
+
+    func setOpendFileAsOutput(secondaryAddress: Int)->Bool {
+        return floppy1541?.setOpendFileAsOutput(secondaryAddress: secondaryAddress) ?? false
+    }
+    
+    func setOpendFileAsInput(secondaryAddress: Int)->Bool {
+        return floppy1541?.setOpendFileAsInput(secondaryAddress: secondaryAddress) ?? false
+    }
+
+    func writeByteToFile(_ byte: Byte, secondaryAddress: Int)->Bool {
+        return floppy1541?.writeByteToFile(byte, secondaryAddress: secondaryAddress) ?? false
     }
     
     func loadFile(_ fileName: String, startAddress: Int, verify: Bool, secAddress: Byte)->Int? {

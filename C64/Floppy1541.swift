@@ -42,6 +42,8 @@ class Floppy1541: ObservableObject {
         var type: FileType
         var data: Data
         var open: Bool = false
+        var setForOutput: Bool = false
+        var setForInput: Bool = false
         var mode: FileMode = .READ
         var secAddress: Int = 0
     }
@@ -168,12 +170,51 @@ class Floppy1541: ObservableObject {
         print(openedFiles)
         return true
     }
+    
+    func closeFile(secondaryAddress: Int)->Bool {
+        if let openedFileIndex = openedFiles.firstIndex(where: { $0.secAddress == secondaryAddress }) {
+            if let diskIndex = disks.firstIndex(where: { $0.isInserted }) {
+                disks[diskIndex].files.append(openedFiles[openedFileIndex])
+            }
+            openedFiles.remove(at: openedFileIndex)
+            return true
+        }
+        return false
+    }
 
     
+    func setOpendFileAsOutput(secondaryAddress: Int)->Bool {
+        if let openedFileIndex = openedFiles.firstIndex(where: { $0.secAddress == secondaryAddress }) {
+            openedFiles[openedFileIndex].setForOutput = true
+            return true
+        }
+        return false
+    }
+    
+    func setOpendFileAsInput(secondaryAddress: Int)->Bool {
+        if let openedFileIndex = openedFiles.firstIndex(where: { $0.secAddress == secondaryAddress }) {
+            openedFiles[openedFileIndex].setForInput = true
+            return true
+        }
+        return false
+    }
+    
+    func writeByteToFile(_ byte: Byte, secondaryAddress: Int) -> Bool {
+        if let openedFileIndex = openedFiles.firstIndex(where: { $0.secAddress == secondaryAddress }) {
+            if openedFiles[openedFileIndex].setForOutput {
+                openedFiles[openedFileIndex].data.append(byte)
+                print(openedFiles[openedFileIndex].data)
+                return true
+            }
+        }
+        return false
+    }
+    
     func parseFilenameToOpen(_ filename: String) -> FileOpenProperties {
+        var filename = filename
         var properties = FileOpenProperties()
         var name = filename.split(separator: ":", omittingEmptySubsequences: false)
-        if name.count > 2 {
+     if name.count > 2 {
             // contains at least two ":"
             properties.error = 34 // SYNTAX ERROR no file given
         }
@@ -196,12 +237,17 @@ class Floppy1541: ObservableObject {
                     }
                 }
             }
+            filename = String(name[1])
+        }
+        if name.count == 1 {
+            filename = String(name[0])
         }
         name = filename.split(separator: ",", omittingEmptySubsequences: false)
         if name.count > 3 {
             // too many commas - Syntax error
             properties.error = 33
         }
+        properties.filename = String(name[0])
         if name.count == 3 {
             let typeComponent = name[1]
             // middle section contains file type; last section contains mode

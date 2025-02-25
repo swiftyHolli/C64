@@ -121,7 +121,7 @@ class MOS6502 {
         if INT { INThandler() }
         if NMI { NMIhandler() }
         
-        if c64.breakpoints.contains(Int(PC)) || PC == 0xedd0 || PC == 0xf20e
+        if c64.breakpoints.contains(Int(PC)) || PC == 0xed40 || PC == 0xf20e
         {
             stop += 1
         }
@@ -1111,24 +1111,33 @@ class MOS6502 {
         case 0xF3E1: //IEC-Bus Open Sekundäradresse und filename senden
             if !checkDeviceNumber() { return }
             print("file open on IEC-Bus 0xF3E1")
-            openFile()
-            c64.memory[0x90] = 0x00 //serial status = OK
+            let success = openFile()
+            c64.memory[0x90] = success ? 0x00 : 0x80 //serial status = OK
             PC = 0xf3ed
             return
+        case 0xF646: // IEC-Bus Close File on IEC-BUS
+            if !checkDeviceNumber() { return }
+            print("file close on IEC-Bus 0xF646")
+            let _ = closeFile()
+            PC = 0xf657
+            return
         case 0xF237: //Eingabe vom IEC-Bus
+            if !checkDeviceNumber() { return }
             print("input from IEC-Bus 0xF237")
-            if A == 8 {
+            if setFileAsInput(){
                 PC = 0xF233 // good! exit
             }
             return
         case 0xF279: // Set output to IEC-Bus
             if !checkDeviceNumber() { return }
             print("set output to IEC-Bus 0xF279")
-            PC = 0xF275 // zurück ohne Fehler
+            if setFileAsOutput() {
+                PC = 0xF275 // zurück ohne Fehler
+            }
             return
         case 0xEDDD: // ein Zeichen (A) an IEC-Bus ausgeben
             print("A: \(A) to IEC-Bus 0xEDD0")
-            writeByteToFile()
+            let _ = writeByteToFile()
             return
         case 0xEE13: // ein Zeichen (A) vom IEC-Bus holen
             print("get characters from IEC-Bus 0xEE13 (until eoi)")
@@ -1167,14 +1176,24 @@ class MOS6502 {
             PC = 0xF68D
         }
         
-        func openFile() {
-            c64.openFile(filename(), secAddress: secAddress())
-            return
+        func openFile()->Bool {
+            return c64.openFile(filename(), secAddress: secAddress())
         }
         
-        func writeByteToFile() {
+        func closeFile()->Bool {
+            return c64.closeFile(secondaryAddress: secAddress())
+        }
+        
+        func setFileAsOutput()->Bool {
+            return c64.setOpendFileAsOutput(secondaryAddress: secAddress())
+        }
+        
+        func setFileAsInput()->Bool {
+            return c64.setOpendFileAsInput(secondaryAddress: secAddress())
+        }
 
-            return
+        func writeByteToFile()->Bool {
+            return c64.writeByteToFile(A, secondaryAddress: secAddress())
         }
         
         func checkDeviceNumber() -> Bool {
@@ -1195,7 +1214,7 @@ class MOS6502 {
         }
         
         func secAddress() -> Int {
-            Int(c64.memory[0xB9])
+            Int(c64.memory[0xB9] & 0x0F)
         }
     }
         
