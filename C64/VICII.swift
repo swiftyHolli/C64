@@ -9,7 +9,7 @@ import SwiftUI
 import UIKit
 
 class VICII: ObservableObject {
-    
+    static let shared = VICII()
     var c64 = C64.shared
             
     struct Registers {

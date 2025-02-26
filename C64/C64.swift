@@ -9,6 +9,8 @@ import Foundation
 
 class C64: ObservableObject {
     
+    @Published var lastDriveError: Int = 0
+    
     enum Interrupts: Int {
         case nmi
         case irq
@@ -66,7 +68,7 @@ class C64: ObservableObject {
             memory[0x0001] & 0b00000100 > 0
         }
     }
-    
+        
     var processorPortDataDirectionRegister: Byte {
         get {
             return memory[0x0000]
@@ -247,6 +249,10 @@ class C64: ObservableObject {
 
     func writeByteToFile(_ byte: Byte, secondaryAddress: Int)->Bool {
         return floppy1541?.writeByteToFile(byte, secondaryAddress: secondaryAddress) ?? false
+    }
+    
+    func readByteFromFile(secondaryAddress: Int)->(byte: Byte, EOI:Bool) {
+        return floppy1541?.readByteFromFile(secondaryAddress: secondaryAddress) ?? (0,true)
     }
     
     func loadFile(_ fileName: String, startAddress: Int, verify: Bool, secAddress: Byte)->Int? {

@@ -126,7 +126,7 @@ class D64Format: ObservableObject {
     
     func readD64File() async {
         do {
-            let url = URL(string: "https://csdb.dk/release/download.php?id=71466")
+            let url = URL(string: "https://csdb.dk/release/download.php?id=253381")
             let (romData, _) = try await URLSession.shared.data(from: url!)
             for index in 0..<romData.count {
                 //TODO: check romData for D64 format

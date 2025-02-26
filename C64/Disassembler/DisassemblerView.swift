@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct DisassemblerView: View {
-    @ObservedObject var disassembler = DisassemblerViewModel()
+    @ObservedObject var disassembler = DisassemblerViewModel.shared
     @State var selectedLines = Set<Disassembler.DisassemblyLine.ID>()
     var body: some View {
         VStack {

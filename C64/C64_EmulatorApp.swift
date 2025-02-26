@@ -10,6 +10,7 @@ import SwiftUI
 @main
 struct C64_EmulatorApp: App {
     var body: some Scene {
+        let _ = C64.shared
         WindowGroup {
             C64View()
         }

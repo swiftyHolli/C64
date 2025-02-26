@@ -8,6 +8,7 @@
 import Foundation
 
 class DisassemblerViewModel: ObservableObject {
+    static var shared = DisassemblerViewModel()
     var c64 = C64.shared
     @Published var disassembler: Disassembler = Disassembler()
     @Published var startAddressString = ""
@@ -16,6 +17,7 @@ class DisassemblerViewModel: ObservableObject {
     
     
     init() {
+        print("DisassemblerVM.init")
         c64.setStopMarker = setStopMarker
     }
     

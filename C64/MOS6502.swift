@@ -1088,6 +1088,7 @@ class MOS6502 {
         N = result & 0b10000000 > 0
     }
     
+    // MARK: - Kernal Overrides
     private func kernalOverrides() {
         switch PC {
         case 0xF4C8: // load to memory from iec bus
@@ -1111,8 +1112,8 @@ class MOS6502 {
         case 0xF3E1: //IEC-Bus Open Sekundäradresse und filename senden
             if !checkDeviceNumber() { return }
             print("file open on IEC-Bus 0xF3E1")
-            let success = openFile()
-            c64.memory[0x90] = success ? 0x00 : 0x80 //serial status = OK
+            let _ = openFile()
+            c64.memory[0x90] = 0x00 //serial status = OK
             PC = 0xf3ed
             return
         case 0xF646: // IEC-Bus Close File on IEC-BUS
@@ -1141,11 +1142,8 @@ class MOS6502 {
             return
         case 0xEE13: // ein Zeichen (A) vom IEC-Bus holen
             print("get characters from IEC-Bus 0xEE13 (until eoi)")
-            print(filename())
             if !checkDeviceNumber() { return }
-            A = 0x41
-            c64.memory[0x90] = 0x64 // set end of identify
-            PC = 0xEE82
+            _ = readByteFromFile()
             return
         default:
             break
@@ -1194,6 +1192,20 @@ class MOS6502 {
 
         func writeByteToFile()->Bool {
             return c64.writeByteToFile(A, secondaryAddress: secAddress())
+        }
+        
+        func readByteFromFile()->Bool {
+            let values = c64.readByteFromFile(secondaryAddress: secAddress())
+            if values.EOI {
+                c64.memory[0x90] = 0x64 // set end of identify
+                PC = 0xEE82
+                return true
+            }
+            else {
+                A = values.byte
+                PC = 0xEE82
+                return true
+            }
         }
         
         func checkDeviceNumber() -> Bool {

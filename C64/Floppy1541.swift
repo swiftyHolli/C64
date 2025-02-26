@@ -9,9 +9,11 @@ import Foundation
 import SwiftUI
 
 class Floppy1541: ObservableObject {
+    static let shared = Floppy1541()
     private var c64 = C64.shared
     
     var openedFiles = [File]()
+    var commandFile = File(name: "", type: .PRG, data: Data())
     
     enum FileType: String, Codable {
         case PRG, SEQ, USR, REL, DEL, UKN
@@ -23,9 +25,16 @@ class Floppy1541: ObservableObject {
     
     let driveErrors: [Int : String] = [0 : "OK", 1 : "OK", 30: "SYNTAX ERROR", 31: "SYNTAX ERROR", 32: "SYNTAX ERROR", 33: "SYNTAX ERROR", 34: "SYNTAX ERROR", 39: "SYNTAX ERROR", 60: "WRITE FILE OPEN", 61: "FILE NOT OPEN", 62: "FILE NOT FOUND", 63: "FILE EXISTS", 64: "FILE TYPE MISMATCH",  70: "NO CHANNEL", 74: "DRIVE NOT READY"]
     
-    var lastError = 0
+    var lastError = 0 {
+        didSet {
+            DispatchQueue.main.async {
+                self.c64.lastDriveError = self.lastError
+            }
+        }
+    }
     
     init() {
+        print("Floppy1541 init")
         c64.floppy1541 = self
         loadDisks()
     }
@@ -46,6 +55,7 @@ class Floppy1541: ObservableObject {
         var setForInput: Bool = false
         var mode: FileMode = .READ
         var secAddress: Int = 0
+        var readPointer: Int = 0
     }
     
     struct FileOpenProperties {
@@ -135,7 +145,7 @@ class Floppy1541: ObservableObject {
                 fileToOpenProperties.mode == .MODIFY {
                 let predicate = NSPredicate(format: "SELF LIKE %@", String(fileToOpenProperties.filename))
                 //Search for the first file with matching patterns
-                if var fileToOpen = insertedDisk.files.first(where: { predicate.evaluate(with: $0)}) {
+                if var fileToOpen = insertedDisk.files.first(where: { predicate.evaluate(with: $0.name)}) {
                     fileToOpen.name = fileToOpenProperties.filename
                     fileToOpen.type = fileToOpenProperties.fileType
                     fileToOpen.mode = fileToOpenProperties.mode
@@ -172,16 +182,19 @@ class Floppy1541: ObservableObject {
     }
     
     func closeFile(secondaryAddress: Int)->Bool {
-        if let openedFileIndex = openedFiles.firstIndex(where: { $0.secAddress == secondaryAddress }) {
-            if let diskIndex = disks.firstIndex(where: { $0.isInserted }) {
-                disks[diskIndex].files.append(openedFiles[openedFileIndex])
+        if var openedFile = openedFiles.first(where: { $0.secAddress == secondaryAddress }) {
+            if let diskIndex = disks.firstIndex(where: { $0.isInserted == true }) {
+                openedFile.secAddress = -1
+                openedFile.open = false
+                openedFile.mode = .READ
+                disks[diskIndex].files.append(openedFile)
+                saveDisks()
             }
-            openedFiles.remove(at: openedFileIndex)
+            openedFiles.removeAll(where: { $0.secAddress == secondaryAddress })
             return true
         }
         return false
     }
-
     
     func setOpendFileAsOutput(secondaryAddress: Int)->Bool {
         if let openedFileIndex = openedFiles.firstIndex(where: { $0.secAddress == secondaryAddress }) {
@@ -192,6 +205,13 @@ class Floppy1541: ObservableObject {
     }
     
     func setOpendFileAsInput(secondaryAddress: Int)->Bool {
+        if secondaryAddress == 15 {
+            // Command channel will be read, so prepare the error message in the data of the file
+            let errorMessage = " \(lastError) \r \(driveErrors[lastError] ?? "Unknown error") \r 0 \r 0 \r"
+            commandFile.data = Data(Array(errorMessage.utf8))
+            commandFile.readPointer = 0
+            return true
+        }
         if let openedFileIndex = openedFiles.firstIndex(where: { $0.secAddress == secondaryAddress }) {
             openedFiles[openedFileIndex].setForInput = true
             return true
@@ -208,6 +228,41 @@ class Floppy1541: ObservableObject {
             }
         }
         return false
+    }
+    
+    func readByteFromFile(secondaryAddress: Int) -> (byte: Byte, EOI: Bool) {
+        if secondaryAddress == 15 {
+            var readPointer = commandFile.readPointer
+            let value = commandFile.data[readPointer]
+            readPointer += 1
+            if readPointer >= commandFile.data.count {
+                lastError = 0
+                return (byte: value, EOI: true)
+            }
+            else {
+                commandFile.readPointer = readPointer
+                return (byte: value, EOI: false)
+            }
+        }
+        if let openedFileIndex = openedFiles.firstIndex(where: { $0.secAddress == secondaryAddress }) {
+            if !openedFiles[openedFileIndex].data.isEmpty {
+                var readPointer = openedFiles[openedFileIndex].readPointer
+                let value = openedFiles[openedFileIndex].data[readPointer]
+                readPointer += 1
+                if readPointer >= openedFiles[openedFileIndex].data.count {
+                    // EOI
+                    return (byte: value, EOI: true)
+                }
+                else {
+                    openedFiles[openedFileIndex].readPointer = readPointer
+                    return (byte: value, EOI: false)
+                }
+            }
+            else {
+                return (byte: 0, EOI: true)
+            }
+        }
+        return (byte: 0 , EOI: true)
     }
     
     func parseFilenameToOpen(_ filename: String) -> FileOpenProperties {

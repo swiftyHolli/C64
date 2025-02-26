@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct Floppy1541View: View {
-    @ObservedObject var floppy1541 = Floppy1541()
+    @ObservedObject var floppy1541 = Floppy1541.shared
     @State var selectedDisk: Floppy1541.Disk.ID?
 
     var body: some View {

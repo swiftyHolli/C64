@@ -9,7 +9,7 @@ import SwiftUI
 import UIKit
 
 struct TVScreen: View {
-    @ObservedObject var vic = VICII()
+    @ObservedObject var vic = VICII.shared
     var body: some View {
         VStack {
             //Text("Time: \(vic.c64.elapsedTime)")
