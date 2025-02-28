@@ -467,7 +467,9 @@ class Floppy1541: ObservableObject {
                 data = disk.files.first?.data
             }
             else {
-                data = disk.files.first(where: { $0.name == fileName })?.data
+                let predicate = NSPredicate(format: "SELF LIKE %@", fileName)
+                //Search for the first file with matching patterns
+                data = disk.files.first(where: { predicate.evaluate(with: $0.name)})?.data
             }
         }
         if data == nil {return nil}

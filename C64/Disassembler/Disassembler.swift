@@ -10,7 +10,7 @@ import Foundation
 class DisassemblerViewModel: ObservableObject {
     static var shared = DisassemblerViewModel()
     var c64 = C64.shared
-    @Published var disassembler: Disassembler = Disassembler()
+    @Published var disassembler = Disassembler.shared
     @Published var startAddressString = ""
     @Published var endAddressString = ""
     
@@ -136,7 +136,7 @@ class DisassemblerViewModel: ObservableObject {
 }
 
 struct Disassembler : Codable {
-    
+    static let shared = Disassembler()
     var disassemblyName: String = ""
     
     struct DisassemblyLine: Identifiable, Hashable, Codable {
@@ -577,7 +577,7 @@ struct Disassembler : Codable {
             case 0xAC:
                 disassembly.instruction = "LDY "
                 incAddress()
-                disassembly.instruction = operand(.absolute)
+                disassembly.operand = operand(.absolute)
             case 0xAD:
                 disassembly.instruction = "LDA "
                 incAddress()

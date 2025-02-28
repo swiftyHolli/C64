@@ -48,7 +48,7 @@ class D64Format: ObservableObject {
             pointer += 1
             nextBlock = Int(d64Disk[pointer])
             pointer += 1
-            for _ in 0..<(nextTrack == 0 ? nextBlock : 256) {
+            for _ in 0..<(nextTrack == 0 ? nextBlock : 254) {
                 fileContent.append(d64Disk[pointer])
                 pointer += 1
             }
@@ -56,6 +56,7 @@ class D64Format: ObservableObject {
                 break
             }
         }
+        print("entry: \(fileEntry.numerOfBlocks * 254), Loaded \(fileContent.count) bytes")
     }
     
     func loadFileEntries() {
@@ -126,7 +127,7 @@ class D64Format: ObservableObject {
     
     func readD64File() async {
         do {
-            let url = URL(string: "https://www.c64.com/games/no-frame.php?showid=1666&searchfor=&searchfor_special=p&from=0&range=10")
+            let url = URL(string: "http://localhost/Vier gewinnt (1987)(Markt & Technik)(de).d64")
             let (romData, _) = try await URLSession.shared.data(from: url!)
             for index in 0..<romData.count {
                 //TODO: check romData for D64 format

@@ -49,7 +49,6 @@ struct DisassemblerFiles {
     mutating func readFilesInDisassemblerDirectory() {
         let fileManager = FileManager.default
         let disassamblerDirectory = URL.documentsDirectory.appending(component: "Disassembler")
-        print(disassamblerDirectory)
         if !fileManager.fileExists(atPath: disassamblerDirectory.path()) {
             do {
                 try fileManager.createDirectory(at: disassamblerDirectory, withIntermediateDirectories: true, attributes: nil)
@@ -61,7 +60,6 @@ struct DisassemblerFiles {
         else {
             do {
                 let fileNames = try fileManager.contentsOfDirectory(atPath: disassamblerDirectory.path())
-                print(fileNames)
                 disassemblerFiles = fileNames
             }
             catch { let error = error
