@@ -65,11 +65,26 @@ class Floppy1541: ObservableObject {
         var error: Int = 0
         var override: Bool = false
     }
-    
+    // MARK: - DetailView view manager
     func startAddress(diskID: Disk.ID, fileID: File.ID) -> String {
         if let file = disks.first(where: { $0.id == diskID })?.files.first(where: { $0.id == fileID }) {
             let startAddress = String(format: "%02X%02X", file.data[1], file.data[0])
             return startAddress
+        }
+        return ""
+    }
+    
+    func startAddress(diskID: Disk.ID, fileID: File.ID) -> Int {
+        if let file = disks.first(where: { $0.id == diskID })?.files.first(where: { $0.id == fileID }) {
+            let startAddress = Int((Word(file.data[1]) << 8) | Word(file.data[0]))
+            return startAddress
+        }
+        return 0
+    }
+    
+    func fileName(diskID: Disk.ID, fileID: File.ID) -> String {
+        if let file = disks.first(where: { $0.id == diskID })?.files.first(where: { $0.id == fileID }) {
+            return file.name
         }
         return ""
     }
@@ -80,6 +95,67 @@ class Floppy1541: ObservableObject {
             return endAddress
         }
         return ""
+    }
+    
+    func readFile(diskID: Disk.ID, fileID: File.ID) -> Data {
+        if let file = disks.first(where: { $0.id == diskID })?.files.first(where: { $0.id == fileID }) {
+            return file.data
+        }
+        return Data()
+    }
+    
+    struct FileDataHexDisplay {
+        struct Line {
+            var address: String = ""
+            var data: String = ""
+            var ascii: String = ""
+        }
+        var lines: [Line] = []
+
+        init(data: Data, startAddress: Int, split: Int = 16) {
+            setUpLines(data: data, startAddress: startAddress, split: split)
+        }
+
+        mutating func setUpLines(data: Data, startAddress: Int, split: Int = 16) {
+            // first calculate the optimal start address as a multiple of the split value
+            let optimizedStartAddress = (startAddress / split) * split
+            var data = data
+            if data.count < 2 { return }
+            data.removeFirst(2)
+            var line: Line = Line()
+            var address: Int = 0
+            for byte in data {
+                while address + optimizedStartAddress < startAddress {
+                    line.data.append("   ")
+                    line.ascii.append(" ")
+                    address += 1
+                }
+                line.data.append(String(format: "%02X ", byte))
+                if byte > 32 && byte <= 126 {
+                    line.ascii.append(String(bytes: [byte], encoding: .ascii) ?? ".")
+                }
+                else if byte == 32 {
+                    line.ascii.append("\u{2423}")
+                }
+                else {
+                    line.ascii.append(".")
+                }
+                address += 1
+                if (address + optimizedStartAddress) % split == 0 {
+                    // a new line started
+                    line.address = String(format: "%04X", address + optimizedStartAddress - split)
+                    lines.append(line)
+                    line = Line()
+                }
+            }
+            if line.data.count > 0 {
+                // no more data but the last line has data
+                line.address = String(format: "%04X", ((address + optimizedStartAddress) / split) * split)
+                line.data = line.data.padding(toLength: 3 * split , withPad: " ", startingAt: 0)
+                line.ascii = line.ascii.padding(toLength: split, withPad: " ", startingAt: 0)
+                lines.append(line)
+            }
+        }
     }
     
     func saveDisks() {
