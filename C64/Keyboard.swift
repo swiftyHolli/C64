@@ -19,6 +19,7 @@ class Keyboard: ObservableObject {
     private var keyPressedBuffer = -1
     private var clocksuntilRelaese = 0
     private var controlKey: ControlKey = .none
+    private var joystickButtonPressed = JoystickButton.none
     
     enum ControlKey: Int {
         case none = 0
@@ -29,12 +30,24 @@ class Keyboard: ObservableObject {
         case shiftLock = 200 // mechanically locked key; parallel connected to the left shift key
         case restore = 201 //restore button performes an NMI
     }
+    
+    enum JoystickButton: Byte {
+        case none = 0b0111_1111
+        case up = 0b0111_1110
+        case down = 0b0111_1101
+        case left = 0b0111_1011
+        case right = 0b0111_0111
+        case fire = 0b0110_1111
+    }
         
     init() {
         c64.keyboard = self
     }
     
     func clock()->C64.Interrupts {
+        if joystickButtonPressed != JoystickButton.none {
+            c64.cia1.setPortA(value: joystickButtonPressed.rawValue)
+        }
         if controlKey == .restore {
             controlKey = .none
             return .nmi
@@ -60,12 +73,12 @@ class Keyboard: ObservableObject {
                 c64.cia1.setPortB(value: PortBLinesForKey(controlKey.rawValue) & c64.cia1.getPortB())
             }
         }
-
         if clocksuntilRelaese > 0 {
             clocksuntilRelaese -= 1
         } else {
             keyPressedBuffer = -1
             controlKey = .none
+            joystickButtonPressed = .none
         }
         return .none
     }
@@ -111,7 +124,15 @@ class Keyboard: ObservableObject {
             clocksuntilRelaese = 100000
         }
     }
+    
+    func JoystickPort1Pressed(_ button: JoystickButton) {
+        joystickButtonPressed = button
+    }
         
+    func JoystickPort2Pressed(_ button: JoystickButton) {
+        c64.cia1.setPortA(value: button.rawValue)
+    }
+
     private func PortALinesForKey(_ key: Int) -> Byte {
         let pinNumber = (key / 8)
         return ~(0b0000_0001 << pinNumber)

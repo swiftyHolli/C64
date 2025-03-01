@@ -12,6 +12,7 @@ struct KeyboardView: View {
     
     var body: some View {
         VStack(spacing: 1) {
+            JoystickView(vm: keyboard, port: 1)
             HStack(spacing: 1) {
                 KeyboardButton(vm: keyboard, "Home", "Clear", "Clear", " ",0 , 0, code: 51)
                 Spacer()
@@ -94,6 +95,57 @@ struct KeyboardView: View {
         }
         .buttonStyle(KeyboardButtonStyle())
         .padding()
+    }
+    
+    struct JoystickView: View {
+        var vm: Keyboard
+        var port: Int = 0
+        var body: some View {
+            VStack {
+                Button("↑") {
+                    if port == 0 {
+                        vm.JoystickPort1Pressed(Keyboard.JoystickButton.up)
+                    }
+                    else {
+                        vm.JoystickPort2Pressed(Keyboard.JoystickButton.up)
+                    }
+                }
+                HStack {
+                    Button("←") {
+                        if port == 0 {
+                            vm.JoystickPort1Pressed(Keyboard.JoystickButton.left)
+                        }
+                        else {
+                            vm.JoystickPort2Pressed(Keyboard.JoystickButton.left)
+                        }
+                    }
+                    Button("♦") {
+                        if port == 0 {
+                            vm.JoystickPort1Pressed(Keyboard.JoystickButton.fire)
+                        }
+                        else {
+                            vm.JoystickPort2Pressed(Keyboard.JoystickButton.fire)
+                        }
+                    }
+                    Button("→") {
+                        if port == 0 {
+                            vm.JoystickPort1Pressed(Keyboard.JoystickButton.right)
+                        }
+                        else {
+                            vm.JoystickPort2Pressed(Keyboard.JoystickButton.right)
+                        }
+                    }
+                }
+                Button("↓") {
+                    if port == 0 {
+                        vm.JoystickPort1Pressed(Keyboard.JoystickButton.down)
+                    }
+                    else {
+                        vm.JoystickPort2Pressed(Keyboard.JoystickButton.down)
+                    }
+                }
+            }
+        }
     }
 }
 

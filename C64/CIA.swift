@@ -45,7 +45,7 @@ struct CIA {
     private var todStarted = false
 
     init(address: Int) {
-        print("CIA")
+        print("CIA \(address)")
     }
     
     mutating func getRegister(address: Int)->Byte {
@@ -147,10 +147,10 @@ struct CIA {
     }
     
     mutating func setPortA(value: Byte) {
-        registers.values[Registers.PRA] = ~registers.values[Registers.DDRA] & value
+        registers.values[Registers.PRA] = value
     }
     mutating func setPortB(value: Byte) {
-        registers.values[Registers.PRB] = ~registers.values[Registers.DDRB] & value
+        registers.values[Registers.PRB] = value
     }
     func getPortA() -> Byte {
         return registers.values[Registers.PRA]

@@ -34,10 +34,10 @@ class VICII: ObservableObject {
         var RASTER: Byte = 0
         var LPX: Byte = 0
         var LPY: Byte = 0
-        var MXE: Byte = 0
-        var CR2: Byte = 0
-        var MXYE: Byte = 0
-        var MEMP: Byte = 0
+        var MXE: Byte = 0   // sprite enabled
+        var CR2: Byte = 0   // control register 2
+        var MXYE: Byte = 0  // sprite Y expansion
+        var MEMP: Byte = 0  // memory pointers
         var INTR: Byte = 0  // interrupt register
         var INTM: Byte = 0  // interrupt enable
         var MXDP: Byte = 0  // sprite data priority
@@ -63,6 +63,15 @@ class VICII: ObservableObject {
     }
     
     private var registers = Registers()
+    private var vicBankStartAddress: Int {
+        let memoryBankSelect = Word(~c64.cia2.getPortA() & 0b11)
+        let memoryBankStartAddress = Int(memoryBankSelect * 0x4000)
+        return memoryBankStartAddress
+    }
+    private var multiColorMode: Bool {
+        return registers.CR2 & 0b0001_0000 > 0
+    }
+    
     private var yScroll = 0
     private var raster = 0
     private var rasterInterruptCompare: Int = 0
@@ -151,7 +160,7 @@ class VICII: ObservableObject {
             registers.MXYE = byte
         case 24:
             registers.MEMP = byte
-            screenMemoryAddress = Int((byte & 0b1111_0000) >> 4) * 1024 // + Startadresse der aktuellen VIC Bank
+            screenMemoryAddress = Int((byte & 0b1111_0000) >> 4) * 1024
             characterMemoryAddress = Int((byte & 0b0000_1110) >> 1) * 2048
         case 25:
             registers.INTR = byte
@@ -310,9 +319,7 @@ class VICII: ObservableObject {
     }
 
     func readCharacterSetByte(_ vicAddress: Int) -> UInt8 {
-        let memoryBankSelect = Word(~c64.cia2.getPortA() & 0b11)
-        let memoryBankStartAddress = Int(memoryBankSelect * 0x4000)
-        let address = characterMemoryAddress + memoryBankStartAddress + vicAddress
+        let address = characterMemoryAddress + vicBankStartAddress + vicAddress
         if ((address >= 0x1000 && address < 0x2000) || (address >= 0x9000 && address < 0xa000)) {
             return c64.characterRom[vicAddress]
         }
@@ -320,9 +327,7 @@ class VICII: ObservableObject {
     }
     
     func readScreenMemoryByte(_ vicAddress: Int) -> UInt8 {
-        let memoryBankSelect = Word(~c64.cia2.getPortA() & 0b11)
-        let memoryBankStartAddress = Int(memoryBankSelect * 0x4000)
-        let address = screenMemoryAddress + memoryBankStartAddress + vicAddress
+        let address = screenMemoryAddress + vicBankStartAddress + vicAddress
         if ((address >= 0x1000 && address < 0x2000) || (address >= 0x9000 && address < 0xa000)) {
             return c64.characterRom[vicAddress]
         }
@@ -364,7 +369,7 @@ class VICII: ObservableObject {
             }
         }
     }
-    
+    var lastPixelColorValue: UInt8 = 0
     func decodeEightPixels() {
         let pixelLine = (raster - 49) % 8
         let colorCode = colorLineBuffer[cyclCounter - 16]
@@ -372,7 +377,26 @@ class VICII: ObservableObject {
         let startX = (cyclCounter - 16) * 8
         let y = raster - 49 + yScroll - 3
         for pixel in 0..<8 {
-            let pixelColor = (characterLineBits & (0x80 >> pixel)) > 0 ?  colorCode : registers.B0C
+            var pixelColor: UInt8 = 0
+            if multiColorMode {
+                var pixelColorValue = (characterLineBits & (0b1100_0000 >> pixel))
+                if pixel % 2 != 0 {
+                    pixelColorValue = lastPixelColorValue
+                }
+                else {
+                    lastPixelColorValue = pixelColorValue
+                }
+                switch pixelColorValue {
+                case 0b00: pixelColor = registers.B0C
+                case 0b01: pixelColor = registers.B1C
+                case 0b10: pixelColor = registers.B2C
+                default: pixelColor = colorCode
+                }
+                
+            }
+            else {
+                pixelColor = (characterLineBits & (0x80 >> pixel)) > 0 ?  colorCode : registers.B0C
+            }
             drawPixel(x: startX + pixel, y: y, color: pixelColor)
         }
     }
@@ -381,11 +405,132 @@ class VICII: ObservableObject {
         raster >= 48 && raster < 248 && cyclCounter == 0 //(raster & 0x07 == yScroll) &&
     }
     
+    func spriteColorForPixel(x:Int, y:Int)->Byte? {
+        for spriteNumber in 0..<8 {
+            if isSpriteActive(spriteNumber) {
+                if isSpriteMultiColor(spriteNumber) {
+                    
+                }
+                else {
+                    let color = spriteColorForPixelHighResolution(x: x, y: y, spriteNumber: spriteNumber)
+                    return color
+                }
+            }
+        }
+        return nil
+    }
+    
     func drawPixel(x:Int, y:Int, color: Byte) {
         context?.move(to: CGPoint(x: x, y: y))
         context?.addLine(to: CGPoint(x: x, y: y + 1))
-        context?.setStrokeColor(colorFromCode(color))
+        if let spriteColor = spriteColorForPixel(x: x, y: y) {
+            context?.setStrokeColor(colorFromCode(spriteColor))
+        }
+        else {
+            context?.setStrokeColor(colorFromCode(color))
+        }
         context?.strokePath()
+    }
+    
+    func isSpriteActive(_ spriteNumber: Int)->Bool {
+        return registers.MXE & (1 << spriteNumber) > 0
+    }
+    
+    func isSpriteMultiColor(_ spriteNumber: Int)->Bool {
+        return registers.MXMC & (1 << spriteNumber) > 0
+    }
+    
+    func spriteColorForPixelHighResolution(x:Int, y:Int, spriteNumber: Int)->Byte? {
+        let spriteDataAddress = screenMemoryAddress + 0x3F8 + spriteNumber
+        let spritePixelXOffset = x + 24 - xPositionForSprite(spriteNumber)
+        if spritePixelXOffset < 0 || spritePixelXOffset > 23 {
+            return nil
+        }
+        let spritePixelYOffset = y + 50 - yPositionForSprite(spriteNumber)
+        if spritePixelYOffset < 0 || spritePixelYOffset > 20 {
+            return nil
+        }
+        // Pixel liegt innerhalb des Sprites
+        let pixelByteOffset = spritePixelYOffset * 3 + (spritePixelXOffset / 8)
+        let pixelBitOffset = 7 - (spritePixelXOffset % 8)
+        let address = Word(c64.readByteFromAddress(Word(spriteDataAddress))) * 64 + Word(vicBankStartAddress)
+        // let pixelByte = c64.readByteFromAddress(address + Word(pixelByteOffset))
+        let pixelIsSet = c64.readByteFromAddress(address + Word(pixelByteOffset)) & (1 << pixelBitOffset) > 0
+        if !pixelIsSet {
+            return nil
+        }
+        let pixelColor = mainColorForSprite(spriteNumber)
+        return pixelColor
+    }
+    
+    func mainColorForSprite(_ spriteNumber: Int)->Byte {
+        switch spriteNumber {
+        case 0:
+            return registers.M0C
+        case 1:
+            return registers.M1C
+        case 2:
+            return registers.M2C
+        case 3:
+            return registers.M3C
+        case 4:
+            return registers.M4C
+        case 5:
+            return registers.M5C
+        case 6:
+            return registers.M6C
+        case 7:
+            return registers.M7C
+        default:
+            print("mainColorForSprite: Invalid sprite number \(spriteNumber)")
+            return 0
+        }
+    }
+    func xPositionForSprite(_ spriteNumber: Int)->Int {
+        switch spriteNumber {
+        case 0:
+            return Int(registers.M0X)
+        case 1:
+            return Int(registers.M1X)
+        case 2:
+            return Int(registers.M2X)
+        case 3:
+            return Int(registers.M3X)
+        case 4:
+            return Int(registers.M4X)
+        case 5:
+            return Int(registers.M5X)
+        case 6:
+            return Int(registers.M6X)
+        case 7:
+            return Int(registers.M7X)
+        default:
+            print("xPositionForSprite: Invalid sprite number \(spriteNumber)")
+            return 0
+        }
+    }
+    func yPositionForSprite(_ spriteNumber: Int)->Int {
+        switch spriteNumber {
+        case 0:
+            return Int(registers.M0Y)
+        case 1:
+            return Int(registers.M1Y)
+        case 2:
+            return Int(registers.M2Y)
+        case 3:
+            return Int(registers.M3Y)
+        case 4:
+            return Int(registers.M4Y)
+        case 5:
+            return Int(registers.M5Y)
+        case 6:
+            return Int(registers.M6Y)
+        case 7:
+            return Int(registers.M7Y)
+        default:
+            print("yPositionForSprite: Invalid sprite number \(spriteNumber)")
+            return 0
+        }
     }
 }
 

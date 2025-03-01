@@ -98,6 +98,8 @@ class C64: ObservableObject {
         loadROMs()
         mos6502.c64 = self
         mos6502.reset()
+        cia2.setPortA(value: 0xff) //Pull up Widerstände am serial bus Data und Clock PA7 und PA6
+
         run()
     }
     
@@ -143,7 +145,6 @@ class C64: ObservableObject {
         if(cia1.clock()) == .irq {
             mos6502.INT = true
         }
-        cia2.setPortA(value: 0xff) //Pull up Widerstände am serial bus Data und Clock PA7 und PA6
         if cia2.clock() == .irq {
             mos6502.NMI = true
         }
