@@ -45,7 +45,9 @@ struct CIA {
     private var todStarted = false
 
     init(address: Int) {
-        print("CIA \(address)")
+        print("CIA")
+        registers.values[Registers.PRA] = 0xFF
+        registers.values[Registers.PRB] = 0xFF
     }
     
     mutating func getRegister(address: Int)->Byte {
@@ -200,8 +202,13 @@ struct CIA {
             }
         }
         func interruptTimerB() {
-            registers.values[Registers.ICR] |= 0b0000_0010
-            registers.values[Registers.ICR] |= 0b1000_0000
+            registers.values[Registers.ICR] |= 0b1000_0010
+        }
+    }
+    
+    mutating func interruptPinFlag() {
+        if interruptMask.flagPin {
+            registers.values[Registers.ICR] |= 0b1001_0000
         }
     }
 }

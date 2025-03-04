@@ -33,6 +33,7 @@ class MOS6502 {
     
     var INT = false
     var NMI = false
+    var NMIEdge = false
     
     var addressBus = 0
     
@@ -70,15 +71,18 @@ class MOS6502 {
     }
     
     func NMIhandler() {
-        c64.memory[Int(SP) + 0x100] = Byte(PC>>8 & 0xFF)
-        SP -= 1
-        c64.memory[Int(SP) + 0x100] = Byte(PC & 0xFF)
-        SP -= 1
-        c64.memory[Int(SP) + 0x100] = PStoByte()
-        SP -= 1
-        I = true
-        NMI = false
-        PC = fetchAddressAbsolute(address: 0xFFFA)
+        if !NMIEdge {
+            c64.memory[Int(SP) + 0x100] = Byte(PC>>8 & 0xFF)
+            SP -= 1
+            c64.memory[Int(SP) + 0x100] = Byte(PC & 0xFF)
+            SP -= 1
+            c64.memory[Int(SP) + 0x100] = PStoByte()
+            SP -= 1
+            I = true
+            NMI = false
+            PC = fetchAddressAbsolute(address: 0xFFFA)
+            NMIEdge = true
+        }
     }
     
     func INThandler() {
@@ -119,7 +123,7 @@ class MOS6502 {
     var stop = 0
     @objc func execute() {        
         if INT { INThandler() }
-        if NMI { NMIhandler() }
+        if NMI { NMIhandler() } else { NMIEdge = false }
         
         if c64.breakpoints.contains(Int(PC)) || PC == 0xed40 || PC == 0xf20e
         {

@@ -51,7 +51,6 @@ struct KeyboardButton: View {
     }
     var body: some View {
         Button {
-            keyboard.keyPressed(code)
         } label: {
             if keyboard.shift {
                 ButtonText(labelShift)
@@ -80,7 +79,18 @@ struct KeyboardButton: View {
         }
         .foregroundStyle(.white)
         .buttonStyle(KeyboardButtonStyle())
+        .onLongPressGesture(minimumDuration: 0, pressing: {
+            pressing in
+            if pressing {
+                keyboard.keyPressed(code)
+            }
+            if !pressing {
+                keyboard.keyReleased(code)
+            }
+        }, perform: {})
+
     }
+    
     struct ButtonText: View {
         var label: String
         init(_ label: String) {

@@ -88,7 +88,7 @@ struct KeyboardView: View {
                 KeyboardButton(vm: keyboard,"Stop", "Load", "Load", " ",0 , 0, code: 63)
                 KeyboardButton(vm: keyboard,"           ", "           ", "           ", "           ",0 , 0, code: 60)
                 KeyboardButton(vm: keyboard,"↓", "↑", "↑", " ",0 , 0, code: 07)
-                KeyboardButton(vm: keyboard,"←", "→", "→", " ",0 , 0, code: 02)
+                KeyboardButton(vm: keyboard,"→", "←", "←", " ",0 , 0, code: 02)
             }
 
             .fixedSize(horizontal: false, vertical: true)
@@ -102,48 +102,13 @@ struct KeyboardView: View {
         var port: Int = 0
         var body: some View {
             VStack {
-                Button("↑") {
-                    if port == 0 {
-                        vm.JoystickPort1Pressed(Keyboard.JoystickButton.up)
-                    }
-                    else {
-                        vm.JoystickPort2Pressed(Keyboard.JoystickButton.up)
-                    }
-                }
+                KeyboardButton(vm: vm,"↑", "↑", "↑", "↑",0 , 0, code: 212)
                 HStack {
-                    Button("←") {
-                        if port == 0 {
-                            vm.JoystickPort1Pressed(Keyboard.JoystickButton.left)
-                        }
-                        else {
-                            vm.JoystickPort2Pressed(Keyboard.JoystickButton.left)
-                        }
-                    }
-                    Button("♦") {
-                        if port == 0 {
-                            vm.JoystickPort1Pressed(Keyboard.JoystickButton.fire)
-                        }
-                        else {
-                            vm.JoystickPort2Pressed(Keyboard.JoystickButton.fire)
-                        }
-                    }
-                    Button("→") {
-                        if port == 0 {
-                            vm.JoystickPort1Pressed(Keyboard.JoystickButton.right)
-                        }
-                        else {
-                            vm.JoystickPort2Pressed(Keyboard.JoystickButton.right)
-                        }
-                    }
+                    KeyboardButton(vm: vm,"←", "←", "←", " ",0 , 0, code: 210)
+                    KeyboardButton(vm: vm,"♦", "♦", "♦", " ",0 , 0, code: 214)
+                    KeyboardButton(vm: vm,"→", "→", "→", " ",0 , 0, code: 211)
                 }
-                Button("↓") {
-                    if port == 0 {
-                        vm.JoystickPort1Pressed(Keyboard.JoystickButton.down)
-                    }
-                    else {
-                        vm.JoystickPort2Pressed(Keyboard.JoystickButton.down)
-                    }
-                }
+                KeyboardButton(vm: vm,"↓", "↓", "↓", "↓",0 , 0, code: 213)
             }
         }
     }

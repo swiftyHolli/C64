@@ -56,7 +56,6 @@ class D64Format: ObservableObject {
                 break
             }
         }
-        print("entry: \(fileEntry.numerOfBlocks * 254), Loaded \(fileContent.count) bytes")
     }
     
     func loadFileEntries() {

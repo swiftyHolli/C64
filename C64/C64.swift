@@ -98,13 +98,12 @@ class C64: ObservableObject {
         loadROMs()
         mos6502.c64 = self
         mos6502.reset()
-        cia2.setPortA(value: 0xff) //Pull up Widerstände am serial bus Data und Clock PA7 und PA6
 
         run()
     }
     
     func run() {
-        DispatchQueue.global(qos: .userInteractive).async {
+        DispatchQueue.global(qos: .userInitiated).async {
             while true {
                 //let startTime = DispatchTime.now()
                 for _ in 0..<10 {
@@ -112,7 +111,7 @@ class C64: ObservableObject {
                 }
                 //let endTime = DispatchTime.now()
                 // self.elapsedTime = Int((endTime.uptimeNanoseconds - startTime.uptimeNanoseconds) / 1000)
-                usleep(1)
+               //usleep(2)
             }
         }
     }
@@ -140,19 +139,12 @@ class C64: ObservableObject {
             makeStep = false
             oldPC = Int(self.mos6502.PC)
             mos6502.execute()
-            vic?.clock()
+            mos6502.INT = vic?.clock() == .irq
         }
-        if(cia1.clock()) == .irq {
-            mos6502.INT = true
-        }
-        if cia2.clock() == .irq {
-            mos6502.NMI = true
-        }
-        if(keyboard?.clock()) == .nmi {
-            mos6502.NMI = true
-        }
+        mos6502.INT = cia1.clock() == .irq
+        mos6502.NMI = cia2.clock() == .irq
+        mos6502.NMI = keyboard?.clock() == .nmi
         mos6502.cycles -= 1
-        
     }
 
     
@@ -190,7 +182,7 @@ class C64: ObservableObject {
             return
         }
         if (CHAREN && address >= C64Adresses.Cia2.start && address <= C64Adresses.Cia2.end) {
-            cia2.setRegister(address: Int(address & C64Adresses.Cia2.start), byte: byte)
+            cia2.setRegister(address: Int(address - C64Adresses.Cia2.start), byte: byte)
             return
         }
         memory[Int(address)] = byte
