@@ -316,7 +316,7 @@ class VICII: ObservableObject {
         case 46:
             return registers.M7C
         default:
-            print("read from unknown VIC register")
+            print("read from unknown VIC register \(String(format: "%02x", address))")
             return 0
         }
     }
@@ -380,7 +380,7 @@ class VICII: ObservableObject {
             }
         }
     }
-    var lastPixelColorValue: UInt8 = 0
+    var lastPixelColorValue: UInt8 = 0 // remember the last pixel for multi color mode
     func decodeEightPixels() {
         let pixelLine = (raster - 49) % 8
         let colorCode = colorLineBuffer[cyclCounter - 16]

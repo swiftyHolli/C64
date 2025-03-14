@@ -10,10 +10,17 @@ import SwiftUI
 
 class Floppy1541: ObservableObject {
     static let shared = Floppy1541()
+    
+    @Published var driveError = 0
+    
     private var c64 = C64.shared
     
     var openedFiles = [File]()
     var commandFile = File(name: "", type: .PRG, data: Data())
+    
+    var insertedDisk: Floppy1541.Disk.ID? {
+        return disks.first(where: { $0.isInserted == true })?.id
+    }
     
     enum FileType: String, Codable {
         case PRG, SEQ, USR, REL, DEL, UKN
@@ -25,10 +32,12 @@ class Floppy1541: ObservableObject {
     
     let driveErrors: [Int : String] = [0 : "OK", 1 : "OK", 30: "SYNTAX ERROR", 31: "SYNTAX ERROR", 32: "SYNTAX ERROR", 33: "SYNTAX ERROR", 34: "SYNTAX ERROR", 39: "SYNTAX ERROR", 60: "WRITE FILE OPEN", 61: "FILE NOT OPEN", 62: "FILE NOT FOUND", 63: "FILE EXISTS", 64: "FILE TYPE MISMATCH",  70: "NO CHANNEL", 74: "DRIVE NOT READY"]
     
-    var lastError = 0 {
+    
+    
+    private var lastError = 0 {
         didSet {
             DispatchQueue.main.async {
-                self.c64.lastDriveError = self.lastError
+                self.driveError = self.lastError
             }
         }
     }
@@ -308,6 +317,7 @@ class Floppy1541: ObservableObject {
     
     func readByteFromFile(secondaryAddress: Int) -> (byte: Byte, EOI: Bool) {
         if secondaryAddress == 15 {
+            lastError = 0
             var readPointer = commandFile.readPointer
             let value = commandFile.data[readPointer]
             readPointer += 1

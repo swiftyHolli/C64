@@ -19,6 +19,7 @@ struct C64View: View {
                     NavigationLink(destination: Floppy1541View()) {
                         Text("💾")
                             .font(.system(size: 55))
+                        Floppy1541LEDView()
                         Text("🔴")
                             .opacity(c64.lastDriveError == 0 ? 0 : 1)
                             .animation(.linear(duration: 0.25).repeatForever(autoreverses: true), value: c64.lastDriveError == 0)

@@ -50,7 +50,8 @@ class Keyboard: ObservableObject {
         button_RightShift = false, button_Equal = false, button_UpArrow = false, button_Slash = false, button_1 = false,
         button_LeftArrow = false, button_Control = false, button_2 = false, button_Space = false, button_Commodore = false,
         button_Q = false, button_Run = false, button_Restore = false, Joy2_Up = false, Joy2_Down = false, Joy2_Left = false, Joy2_Right = false,
-        Joy2_Fire = false
+        Joy2_Fire = false, Joy1_Up = false, Joy1_Down = false, Joy1_Left = false, Joy1_Right = false,
+        Joy1_Fire = false
 
     init() {
         c64.keyboard = self
@@ -59,6 +60,7 @@ class Keyboard: ObservableObject {
     func clock()->C64.Interrupts {
         c64.cia1.setPortB(value: portBLinesForPortAOutput(portA: c64.cia1.getPortA()))
         setJoystickPortA()
+        setJoystickPortB()
         if button_Restore {
             return .nmi
         } else {
@@ -99,8 +101,10 @@ class Keyboard: ObservableObject {
         case 0x0E:
             button_E = true
         case 0x0F:
-            button_LeftShift.toggle()
-            shift = button_LeftShift
+            if !shiftLock {
+                button_LeftShift.toggle()
+                shift = button_LeftShift
+            }
         case 0x10:
             button_5 = true
         case 0x11:
@@ -174,8 +178,10 @@ class Keyboard: ObservableObject {
         case 0x33:
             button_Home = true
         case 0x34:
-            button_RightShift.toggle()
-            shift = button_RightShift
+            if !shiftLock {
+                button_RightShift.toggle()
+                shift = button_RightShift
+            }
         case 0x35:
             button_Equal = true
         case 0x36:
@@ -204,9 +210,11 @@ class Keyboard: ObservableObject {
             shiftLock.toggle()
             if shiftLock {
                 button_LeftShift = true
+                shift = true
             }
             else {
                 button_LeftShift = false
+                shift = false
             }
         case 201:
             button_Restore = true
@@ -221,7 +229,17 @@ class Keyboard: ObservableObject {
             Joy2_Down = true
         case 214:
             Joy2_Fire = true
-        
+        case 215:
+            Joy1_Left = true
+        case 216:
+            Joy1_Right = true
+        case 217:
+            Joy1_Up = true
+        case 218:
+            Joy1_Down = true
+        case 219:
+            Joy1_Fire = true
+
         default:
             print("unknown keycode: \(key)")
             break
@@ -380,6 +398,16 @@ class Keyboard: ObservableObject {
             Joy2_Down = false
         case 214:
             Joy2_Fire = false
+        case 215:
+            Joy1_Left = false
+        case 216:
+            Joy1_Right = false
+        case 217:
+            Joy1_Up = false
+        case 218:
+            Joy1_Down = false
+        case 219:
+            Joy1_Fire = false
 
         default:
             print("unknown keycode: \(key)")
@@ -409,6 +437,23 @@ class Keyboard: ObservableObject {
         }
     }
     
+    private func setJoystickPortB() {
+        if Joy1_Up {
+            c64.cia1.setPortB(value: JoystickButton.up.rawValue | 0x80)
+        }
+        if Joy1_Down {
+            c64.cia1.setPortB(value: JoystickButton.down.rawValue | 0x80)
+        }
+        if Joy1_Left {
+            c64.cia1.setPortB(value: JoystickButton.left.rawValue | 0x80)
+        }
+        if Joy1_Right {
+            c64.cia1.setPortB(value: JoystickButton.right.rawValue | 0x80)
+        }
+        if Joy1_Fire {
+            c64.cia1.setPortB(value: JoystickButton.fire.rawValue | 0x80)
+        }
+    }
     private func PortALinesForKey(_ key: Int) -> Byte {
         let pinNumber = (key / 8)
         return ~(0b0000_0001 << pinNumber)

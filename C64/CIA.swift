@@ -177,9 +177,9 @@ struct CIA {
             if(timerA == 0) {
                 if(registers.values[Registers.CRA] & 0b0000_1000 == 0) {
                     timerA = latchA
-                    if(interruptMask.underflowTimerA) {
-                        interruptTimerA()
-                    }
+                }
+                if(interruptMask.underflowTimerA && (registers.values[Registers.ICR] & 0b0000_0001 == 0)) {
+                    interruptTimerA()
                 }
             }
         }
@@ -195,7 +195,7 @@ struct CIA {
             if(timerB == 0) {
                 if(registers.values[Registers.CRB] & 0b0000_1000 == 0) {
                     timerB = latchB
-                    if(interruptMask.underflowTimerB) {
+                    if(interruptMask.underflowTimerB && (registers.values[Registers.ICR] & 0b0000_0010 == 0)) {
                         interruptTimerB()
                     }
                 }

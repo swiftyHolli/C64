@@ -18,6 +18,8 @@ struct DisassemblerDetailView: View {
     @State var dataEnd: String = ""
     @State var newDisassemblyStart: String = ""
     @State var newDisassemblyEnd: String = ""
+    @State var changeAddress: String = ""
+    @State var newValue: String = ""
 
     init(vm: DisassemblerViewModel, line: Disassembler.DisassemblyLine) {
         self.vm = vm
@@ -28,6 +30,7 @@ struct DisassemblerDetailView: View {
     
     var body: some View {
         VStack {
+            changeValue
             markAsData
             newDisassembly
             TextField("label", text: $label)
@@ -47,6 +50,8 @@ struct DisassemblerDetailView: View {
         .onAppear() {
             dataStart = String(format: "%04x", line.address)
             dataEnd = String(format: "%04x", line.address)
+            changeAddress = dataStart
+            newValue = "00"
         }
     }
     var markAsData: some View {
@@ -79,7 +84,20 @@ struct DisassemblerDetailView: View {
         }
         .padding(.vertical)
     }
-
+    
+    var changeValue: some View {
+        VStack(alignment: .leading) {
+            Button("Change value") {
+                vm.changeValue(Int(newValue, radix: 16), at: Int(changeAddress, radix: 16))
+            }
+            HStack {
+                Text("at address:")
+                TextField("", text: $changeAddress)
+                Text("to:")
+                TextField("", text: $newValue)
+            }
+        }
+    }
 }
 
 #Preview {

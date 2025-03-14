@@ -21,6 +21,26 @@ class DisassemblerViewModel: ObservableObject {
         c64.setStopMarker = setStopMarker
     }
     
+    var PC: Int {
+        Int(c64.mos6502.PC)
+    }
+    
+    var A: Int {
+        Int(c64.mos6502.A)
+    }
+    
+    var X: Int {
+        Int(c64.mos6502.X)
+    }
+
+    var Y: Int {
+        Int(c64.mos6502.Y)
+    }
+
+    var SP: Int {
+        Int(c64.mos6502.SP)
+    }
+
     private var startAddress: Int {
         Int(startAddressString, radix: 16) ?? 0
     }
@@ -53,6 +73,11 @@ class DisassemblerViewModel: ObservableObject {
         if let lineAddress = disassembler.disassembly.firstIndex(where: { $0.address == address }) {
             disassembler.disassembly[lineAddress].comment = comment
         }
+    }
+    
+    func changeValue(_ value: Int?, at address: Int?) {
+        guard let value = value, let address = address else { return }
+        c64.memory[address] = Byte(value)
     }
     
     func makeStep() {

@@ -12,7 +12,10 @@ struct KeyboardView: View {
     
     var body: some View {
         VStack(spacing: 1) {
-            JoystickView(vm: keyboard, port: 1)
+            HStack {
+                Joystick2View(vm: keyboard, port: 1)
+                Joystick1View(vm: keyboard, port: 1)
+            }
             HStack(spacing: 1) {
                 KeyboardButton(vm: keyboard, "Home", "Clear", "Clear", " ",0 , 0, code: 51)
                 Spacer()
@@ -97,7 +100,7 @@ struct KeyboardView: View {
         .padding()
     }
     
-    struct JoystickView: View {
+    struct Joystick2View: View {
         var vm: Keyboard
         var port: Int = 0
         var body: some View {
@@ -109,6 +112,21 @@ struct KeyboardView: View {
                     KeyboardButton(vm: vm,"→", "→", "→", " ",0 , 0, code: 211)
                 }
                 KeyboardButton(vm: vm,"↓", "↓", "↓", "↓",0 , 0, code: 213)
+            }
+        }
+    }
+    struct Joystick1View: View {
+        var vm: Keyboard
+        var port: Int = 0
+        var body: some View {
+            VStack {
+                KeyboardButton(vm: vm,"↑", "↑", "↑", "↑",0 , 0, code: 217)
+                HStack {
+                    KeyboardButton(vm: vm,"←", "←", "←", " ",0 , 0, code: 215)
+                    KeyboardButton(vm: vm,"♦", "♦", "♦", " ",0 , 0, code: 219)
+                    KeyboardButton(vm: vm,"→", "→", "→", " ",0 , 0, code: 216)
+                }
+                KeyboardButton(vm: vm,"↓", "↓", "↓", "↓",0 , 0, code: 218)
             }
         }
     }

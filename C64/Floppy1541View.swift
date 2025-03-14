@@ -60,10 +60,52 @@ struct Floppy1541View: View {
         }
         .onAppear() {
             floppy1541.loadDisks()
-            selectedDisk = floppy1541.disks.first?.id
+            selectedDisk = floppy1541.insertedDisk
         }
         .onDisappear() {
             floppy1541.saveDisks()
         }
+    }
+}
+
+
+
+struct Floppy1541LEDView: View {
+    @ObservedObject var floppy1541 = Floppy1541.shared
+    
+    @State private var timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+    @State private var errorLedIsOn: Bool = false
+    @State private var driveLedIsOn: Bool = false
+    
+
+    var body: some View {
+        HStack {
+            Circle()
+                .fill(errorLedIsOn || driveLedIsOn ? .red : .clear)
+                .frame(width: 20, height: 20)
+        }
+        .onReceive(timer) { _ in
+            errorLedIsOn.toggle()
+        }
+        .onChange(of: floppy1541.driveError) {
+            if floppy1541.driveError != 0 {
+                startTimer()
+            }
+            else {
+                stopTimer()
+                errorLedIsOn = false
+            }
+        }
+        .onAppear() {
+            stopTimer()
+        }
+    }
+    
+    func startTimer() {
+        timer = Timer.publish(every: 0.3, on: .main, in: .common).autoconnect()
+    }
+    
+    func stopTimer() {
+        timer.upstream.connect().cancel()
     }
 }

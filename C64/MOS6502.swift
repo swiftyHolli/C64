@@ -10,7 +10,8 @@ import Foundation
 typealias Byte = UInt8
 typealias Word = UInt16
 
-class MOS6502 {
+struct MOS6502 {
+    
     var c64: C64!
     
     var PC: Word        //Program counter
@@ -55,7 +56,7 @@ class MOS6502 {
         C = false; Z = false; I = false; D = false; B = false; V = false; N = false;
     }
         
-    func reset() {
+    mutating func reset() {
         print("6502 Reset")
         PC = 0xFFFC
         SP = 0xFF
@@ -70,7 +71,7 @@ class MOS6502 {
         cycles = 0
     }
     
-    func NMIhandler() {
+    mutating func NMIhandler() {
         if !NMIEdge {
             c64.memory[Int(SP) + 0x100] = Byte(PC>>8 & 0xFF)
             SP -= 1
@@ -85,7 +86,7 @@ class MOS6502 {
         }
     }
     
-    func INThandler() {
+    mutating func INThandler() {
         if I { return }
         c64.memory[Int(SP) + 0x100] = Byte(PC>>8 & 0xFF)
         SP -= 1
@@ -110,7 +111,7 @@ class MOS6502 {
         return ps
     }
     
-    private func ByteToPS(ps: Byte) {
+    mutating private func ByteToPS(ps: Byte) {
         N = ps & (1 << 7) != 0
         V = ps & (1 << 6) != 0
         B = ps & (1 << 4) != 0
@@ -121,11 +122,11 @@ class MOS6502 {
     }
     
     var stop = 0
-    @objc func execute() {        
+    mutating func execute() {
         if INT { INThandler() }
         if NMI { NMIhandler() } else { NMIEdge = false }
         
-        if c64.breakpoints.contains(Int(PC)) || PC == 0xed40 || PC == 0xf20e
+        if c64.breakpoints.contains(Int(PC)) || PC == 0xA43d || PC == 0xf20e
         {
             stop += 1
         }
@@ -841,7 +842,7 @@ class MOS6502 {
         }
     }
     //MARK: - functions
-    func branch(cond: Bool) {
+    mutating func branch(cond: Bool) {
         let distance = Int(Int8(bitPattern: fetchByteImmediatePC()))
         if(cond) {
             if distance + Int(PC & 0xFF) > 0xFF { cycles += 1}
@@ -857,14 +858,14 @@ class MOS6502 {
         c64.writeByteToAddress(address, byte: byte)
     }
         
-    func fetchByteImmediatePC()->Byte {
+    mutating func fetchByteImmediatePC()->Byte {
         let data = readByteFromMemory(address: PC)
         PC += 1
         cycles += 1
         return data
     }
     
-    func fetchByteAbsolutePC()->Byte {
+    mutating func fetchByteAbsolutePC()->Byte {
         let addressLowByte = fetchByteImmediatePC()
         let addressHighByte = fetchByteImmediatePC()
         OP = Word(addressHighByte) << 8
@@ -873,7 +874,7 @@ class MOS6502 {
         return readByteFromMemory(address: OP)
     }
     
-    func fetchByteAbsolutePCindexedX()->Byte {
+    mutating func fetchByteAbsolutePCindexedX()->Byte {
         let addressLowByte = fetchByteImmediatePC()
         let addressHighByte = fetchByteImmediatePC()
         OP = Word(addressHighByte) << 8
@@ -886,7 +887,7 @@ class MOS6502 {
         return readByteFromMemory(address: OP)
     }
     
-    func fetchByteAbsolutePCindexedY()->Byte {
+    mutating func fetchByteAbsolutePCindexedY()->Byte {
         let addressLowByte = fetchByteImmediatePC()
         let addressHighByte = fetchByteImmediatePC()
         var address: Word = Word(addressHighByte) << 8
@@ -899,7 +900,7 @@ class MOS6502 {
         return readByteFromMemory(address: address)
     }
     
-    func fetchAddressAbsolute(address: Word)->Word {
+    mutating func fetchAddressAbsolute(address: Word)->Word {
         let addressLowByte = readByteFromMemory(address: address)
         let addressHighByte = readByteFromMemory(address: address + 1)
         var address: Word = Word(addressHighByte) << 8
@@ -908,7 +909,7 @@ class MOS6502 {
         return address
     }
     
-    func fetchAddressAbsolutePC()->Word {
+    mutating func fetchAddressAbsolutePC()->Word {
         let addressLowByte = fetchByteImmediatePC()
         let addressHighByte = fetchByteImmediatePC()
         var address: Word = Word(addressHighByte) << 8
@@ -916,7 +917,7 @@ class MOS6502 {
         return address
     }
     
-    func fetchAddressAbsolutePCIndirect()->Word {
+    mutating func fetchAddressAbsolutePCIndirect()->Word {
         let addressIndirect = fetchAddressAbsolutePC()
         let addressLowByte = readByteFromMemory(address: addressIndirect)
         let addressHighByte = readByteFromMemory(address: addressIndirect + 1)
@@ -925,14 +926,14 @@ class MOS6502 {
         return address | Word(addressLowByte)
     }
     
-    func fetchByteZeropage()->Byte {
+    mutating func fetchByteZeropage()->Byte {
         OPZP = readByteFromMemory(address: PC)
         PC += 1
         cycles += 2
         return  readByteFromMemory(address: Word(OPZP))
     }
     
-    func fetchByteXindexedZeropage()->Byte {
+    mutating func fetchByteXindexedZeropage()->Byte {
         let addressZeropage = Word(readByteFromMemory(address: PC)) + Word(X)
         OPZP = Byte(addressZeropage & 0x00FF)
         PC += 1
@@ -940,7 +941,7 @@ class MOS6502 {
         return  readByteFromMemory(address: Word(OPZP))
     }
     
-    func fetchByteYindexedZeropage()->Byte {
+    mutating func fetchByteYindexedZeropage()->Byte {
         var addressZeropage = Word(readByteFromMemory(address: PC)) + Word(Y)
         addressZeropage = addressZeropage & 0x00FF
         PC += 1
@@ -948,7 +949,7 @@ class MOS6502 {
         return  readByteFromMemory(address: addressZeropage)
     }
     
-    func fetchByteXindexedZeropageIndirect()->Byte {
+    mutating func fetchByteXindexedZeropageIndirect()->Byte {
         var addressZeropage = Word(readByteFromMemory(address: PC)) + Word(X)
         addressZeropage = addressZeropage & 0x00FF
         let addressLowByte = readByteFromMemory(address: addressZeropage)
@@ -960,7 +961,7 @@ class MOS6502 {
         return  readByteFromMemory(address: address)
     }
     
-    func fetchByteZeropageIndirectYindexed()->Byte {
+    mutating func fetchByteZeropageIndirectYindexed()->Byte {
         let addressZeropage = Int(readByteFromMemory(address: PC))
         let addressLowByte = readByteFromMemory(address: Word(addressZeropage))
         let addressHighByte = readByteFromMemory(address: Word(addressZeropage + 1))
@@ -975,7 +976,7 @@ class MOS6502 {
         return  readByteFromMemory(address: address)
     }
     
-    func StoreByteAbsolutePC(byte: Byte) {
+    mutating func StoreByteAbsolutePC(byte: Byte) {
         let addressLowByte = fetchByteImmediatePC()
         let addressHighByte = fetchByteImmediatePC()
         var address: Word = Word(addressHighByte) << 8
@@ -984,7 +985,7 @@ class MOS6502 {
         writeByteToMemory(address: address, byte: byte)
     }
     
-    func StoreByteAbsolutePCIndexedX(byte: Byte) {
+    mutating func StoreByteAbsolutePCIndexedX(byte: Byte) {
         let addressLowByte = fetchByteImmediatePC()
         let addressHighByte = fetchByteImmediatePC()
         var address: Word = Word(addressHighByte) << 8
@@ -993,7 +994,7 @@ class MOS6502 {
         writeByteToMemory(address: address + Word(X), byte: byte)
     }
     
-    func StoreByteAbsolutePCIndexedY(byte: Byte) {
+    mutating func StoreByteAbsolutePCIndexedY(byte: Byte) {
         let addressLowByte = fetchByteImmediatePC()
         let addressHighByte = fetchByteImmediatePC()
         var address: Word = Word(addressHighByte) << 8
@@ -1002,25 +1003,25 @@ class MOS6502 {
         writeByteToMemory(address: address + Word(Y), byte: byte)
     }
     
-    func StoreByteZeropage(byte: Byte) {
+    mutating func StoreByteZeropage(byte: Byte) {
         let address = fetchByteImmediatePC()
         cycles += 1
         writeByteToMemory(address: Word(address), byte: byte)
     }
     
-    func StoreByteXindexedZeropage(byte: Byte) {
+    mutating func StoreByteXindexedZeropage(byte: Byte) {
         let address = fetchByteImmediatePC()
         cycles += 2
         writeByteToMemory(address: Word(address) + Word(X), byte: byte)
     }
     
-    func StoreByteYindexedZeropage(byte: Byte) {
+    mutating func StoreByteYindexedZeropage(byte: Byte) {
         let address = fetchByteImmediatePC()
         cycles += 2
         writeByteToMemory(address: Word(address) + Word(Y), byte: byte)
     }
     
-    func StoreByteXindexedZeropageIndirect(byte: Byte) {
+    mutating func StoreByteXindexedZeropageIndirect(byte: Byte) {
         var addressZeropage = Word(fetchByteImmediatePC()) + Word(X)
         addressZeropage = addressZeropage & 0x00FF
         let addressLowByte = readByteFromMemory(address: addressZeropage)
@@ -1031,7 +1032,7 @@ class MOS6502 {
         writeByteToMemory(address: address, byte: byte)
     }
     
-    func storeByteZeropageIndirectYindexed(byte: Byte) {
+    mutating func storeByteZeropageIndirectYindexed(byte: Byte) {
         let addressZeropage = fetchByteImmediatePC()
         let addressLowByte = readByteFromMemory(address: Word(addressZeropage))
         let addressHighByte = readByteFromMemory(address: Word(addressZeropage + 1))
@@ -1042,7 +1043,7 @@ class MOS6502 {
         writeByteToMemory(address: address, byte: byte)
     }
     
-    func adc(operand: Byte) {
+    mutating func adc(operand: Byte) {
         let op = Word(operand)
         var tmp = op + Word(A) + Word((C ? 1 : 0))
         Z = tmp & 0xFF == 0
@@ -1066,7 +1067,7 @@ class MOS6502 {
         A = Byte(tmp & 0xFF)
     }
     
-    func sbc(operand: Byte) {
+    mutating func sbc(operand: Byte) {
         let op: Word = Word(~operand)
         var tmp: Word = Word(A) &+ op &+ Word(C ? 1 : 0)
         N = tmp & 0x80 > 0
@@ -1084,22 +1085,26 @@ class MOS6502 {
         A = Byte(tmp & 0xFF)
     }
     
-    func cmp(operand: Byte, register: Byte) {
+    mutating func cmp(operand: Byte, register: Byte) {
         let op = Word(~operand)
         let result = Word(register) + op + 1
         Z = result & 0xFF == 0
         C = result > 0xFF
         N = result & 0b10000000 > 0
     }
-    
+
     // MARK: - Kernal Overrides
-    private func kernalOverrides() {
+    var loadedFromIECBus = false
+    mutating private func kernalOverrides() {
         switch PC {
         case 0xF4C8: // load to memory from iec bus
-            PC = 0xF4F0 // print loading... verifying...
-        case 0xF4F3:
             load()
-            
+        case 0xF4F3:
+            if loadedFromIECBus {
+                PC = 0xF5A9
+                loadedFromIECBus = false
+                return
+            }
         case 0xF605: // save to iec bus
             let device = Int(c64.memory[0xBA])
             if device != 8 {
@@ -1163,11 +1168,12 @@ class MOS6502 {
             if let endAddress = c64.loadFile(filename(), startAddress: address, verify: verify, secAddress: secAddress) {
                 c64.memory[0xAE] = Byte(endAddress & 0xFF)
                 c64.memory[0xAF] = Byte(endAddress >> 8)
-                PC = 0xF5A9
+                PC = 0xF4F0 // print loading... verifying...
+                loadedFromIECBus = true
                 return
             }
             C = true //Error flag
-            PC = 0xF5AA // Datei geladen, ohne Fehler zurück
+            PC = 0xF530 // File not found Error ausgeben
         }
         
         func save() {
@@ -1235,7 +1241,7 @@ class MOS6502 {
     }
         
     
-    func prepareForTest(address: Int, bytes: [Byte]) {
+   mutating func prepareForTest(address: Int, bytes: [Byte]) {
         for i in 0..<bytes.count {
             c64.memory[address + i] = bytes[i]
         }

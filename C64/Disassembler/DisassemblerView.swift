@@ -14,6 +14,7 @@ struct DisassemblerView: View {
         VStack {
             controlView
                 .padding()
+            DisassemblerRegistersView()
             List(selection: $selectedLines) {
                 ForEach(disassembler.disassemblyText, id: \.id) { line in
                     NavigationLink(destination: DisassemblerDetailView(vm: disassembler, line: line)) {

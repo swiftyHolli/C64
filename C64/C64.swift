@@ -157,31 +157,31 @@ class C64: ObservableObject {
         if (HIRAM && address >= C64Adresses.KernalRom.start && address <= C64Adresses.KernalRom.end) {
             return kernalROM[Int(address - C64Adresses.KernalRom.start)]
         }
-        if (!CHAREN && address >= C64Adresses.CharacterROM.start && address <= C64Adresses.CharacterROM.end) {
+        if (!CHAREN && (HIRAM || LORAM) && address >= C64Adresses.CharacterROM.start && address <= C64Adresses.CharacterROM.end) {
             return characterRom[Int(address - C64Adresses.CharacterROM.start)]
         }
-        if (CHAREN && address >= C64Adresses.Vic.start && address <= C64Adresses.Vic.end) {
+        if (CHAREN && (HIRAM || LORAM) && address >= C64Adresses.Vic.start && address <= C64Adresses.Vic.end) {
             return vic?.getRegister(address: Int(address - C64Adresses.Vic.start)) ?? 0
         }
-        if (CHAREN && address >= C64Adresses.Cia1.start && address <= C64Adresses.Cia1.end) {
+        if (CHAREN && (HIRAM || LORAM) && address >= C64Adresses.Cia1.start && address <= C64Adresses.Cia1.end) {
             return cia1.getRegister(address: Int(address - C64Adresses.Cia1.start))
         }
-        if (CHAREN && address >= C64Adresses.Cia2.start && address <= C64Adresses.Cia2.end) {
+        if (CHAREN && (HIRAM || LORAM) && address >= C64Adresses.Cia2.start && address <= C64Adresses.Cia2.end) {
             return cia2.getRegister(address: Int(address - C64Adresses.Cia2.start))
         }
         return memory[Int(address)]
     }
     
     func writeByteToAddress(_ address: Word, byte: Byte) {
-        if (CHAREN && address >= C64Adresses.Vic.start && address <= C64Adresses.Vic.end) {
+        if (CHAREN && (HIRAM || LORAM) && address >= C64Adresses.Vic.start && address <= C64Adresses.Vic.end) {
             vic?.setRegister(address: Int(address - C64Adresses.Vic.start), byte: byte)
             return
         }
-        if (CHAREN && address >= C64Adresses.Cia1.start && address <= C64Adresses.Cia1.end) {
+        if (CHAREN && (HIRAM || LORAM) && address >= C64Adresses.Cia1.start && address <= C64Adresses.Cia1.end) {
             cia1.setRegister(address: Int(address - C64Adresses.Cia1.start), byte: byte)
             return
         }
-        if (CHAREN && address >= C64Adresses.Cia2.start && address <= C64Adresses.Cia2.end) {
+        if (CHAREN && (HIRAM || LORAM) && address >= C64Adresses.Cia2.start && address <= C64Adresses.Cia2.end) {
             cia2.setRegister(address: Int(address - C64Adresses.Cia2.start), byte: byte)
             return
         }

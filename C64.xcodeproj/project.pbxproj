@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3045A7452D7AEA1100CA1FF3 /* DisassemblerRegistersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3045A7442D7AEA1000CA1FF3 /* DisassemblerRegistersView.swift */; };
 		304D13362D69D7510099D57A /* Floppy1541FileDetailsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304D13352D69D7360099D57A /* Floppy1541FileDetailsView.swift */; };
 		3083058C2D666B2C0046E73E /* Disassembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308305682D666B2C0046E73E /* Disassembler.swift */; };
 		3083058D2D666B2C0046E73E /* DisassemblerDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308305692D666B2C0046E73E /* DisassemblerDetailView.swift */; };
@@ -46,6 +47,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		3045A7442D7AEA1000CA1FF3 /* DisassemblerRegistersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisassemblerRegistersView.swift; sourceTree = "<group>"; };
 		304D13352D69D7360099D57A /* Floppy1541FileDetailsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Floppy1541FileDetailsView.swift; sourceTree = "<group>"; };
 		308305682D666B2C0046E73E /* Disassembler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Disassembler.swift; sourceTree = "<group>"; };
 		308305692D666B2C0046E73E /* DisassemblerDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisassemblerDetailView.swift; sourceTree = "<group>"; };
@@ -109,6 +111,7 @@
 				3083056A2D666B2C0046E73E /* DisassemblerFiles.swift */,
 				3083056B2D666B2C0046E73E /* DisassemblerFilesView.swift */,
 				3083056C2D666B2C0046E73E /* DisassemblerView.swift */,
+				3045A7442D7AEA1000CA1FF3 /* DisassemblerRegistersView.swift */,
 			);
 			path = Disassembler;
 			sourceTree = "<group>";
@@ -310,6 +313,7 @@
 				308305922D666B2C0046E73E /* C64_EmulatorApp.swift in Sources */,
 				308305932D666B2C0046E73E /* C64View.swift in Sources */,
 				308305942D666B2C0046E73E /* CIA.swift in Sources */,
+				3045A7452D7AEA1100CA1FF3 /* DisassemblerRegistersView.swift in Sources */,
 				308305952D666B2C0046E73E /* D64Format.swift in Sources */,
 				308305962D666B2C0046E73E /* D64View.swift in Sources */,
 				304D13362D69D7510099D57A /* Floppy1541FileDetailsView.swift in Sources */,
